@@ -5,7 +5,7 @@ const authorizationHeader = require('../helpers/authToken');
 describe('Scheduled transactions creation endpoint', () => {
   it('should be able to create a scheduled transaction', async () => {
     const response = await api
-      .post('/transactions/scheduled')
+      .post('/scheduled')
       .set(authorizationHeader)
       .send({
         categoriesId: [999],
@@ -21,7 +21,7 @@ describe('Scheduled transactions creation endpoint', () => {
 
   it("should NOT be able to create a scheduled transaction if timeSpan doesn't coincide with timesToRepeat", async () => {
     const response = await api
-      .post('/transactions/scheduled')
+      .post('/scheduled')
       .set(authorizationHeader)
       .send({
         categoriesId: [999],
@@ -37,7 +37,7 @@ describe('Scheduled transactions creation endpoint', () => {
 
   it('should NOT be able to create a scheduled transaction if required fields are missing', async () => {
     const response = await api
-      .post('/transactions/scheduled')
+      .post('/scheduled')
       .set(authorizationHeader)
       .send({
         amount: 100,
@@ -49,7 +49,7 @@ describe('Scheduled transactions creation endpoint', () => {
 
   it("should NOT be able to create a scheduled transaction if wallet or category doesn't exist", async () => {
     const response = await api
-      .post('/transactions/scheduled')
+      .post('/scheduled')
       .set(authorizationHeader)
       .send({
         categoriesId: [98227],
