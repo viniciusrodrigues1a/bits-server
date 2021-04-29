@@ -1,7 +1,7 @@
 const { describe, it, expect } = require('@jest/globals');
 const api = require('../helpers/server');
 
-describe('Account creation endpoint', () => {
+describe('Session creation endpoint', () => {
   it('should be able to login', async () => {
     const response = await api.post('/session').send({
       password: 'pa55word',
