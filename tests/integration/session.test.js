@@ -1,5 +1,6 @@
 const { describe, it, expect } = require('@jest/globals');
 const api = require('../helpers/server');
+const authorizationHeader = require('../helpers/authToken');
 
 describe('Session creation endpoint', () => {
   it('should be able to login', async () => {
@@ -39,5 +40,21 @@ describe('Session creation endpoint', () => {
 
     expect(response.statusCode).toEqual(400);
     expect(response.body.message).toEqual('Wrong email!');
+  });
+});
+
+describe('Token validation endpoint', () => {
+  it('should return 200 when token is valid', async () => {
+    const response = await api.get('/session').set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+  });
+
+  it('should return 401 when token is not valid', async () => {
+    const response = await api
+      .get('/session')
+      .set({ Authorization: 'Bearer invalidToken' });
+
+    expect(response.statusCode).toEqual(401);
   });
 });
