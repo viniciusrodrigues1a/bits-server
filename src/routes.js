@@ -14,7 +14,9 @@ function Routes(database) {
 
   routes.post('/signup', RegisterController(database).store);
 
-  routes.post('/session', SessionController(database).store);
+  const sessionController = SessionController(database);
+  routes.post('/session', sessionController.store);
+  routes.get('/session', auth, sessionController.validateToken);
 
   const walletController = WalletController(database);
   routes.post('/wallet', auth, walletController.store);

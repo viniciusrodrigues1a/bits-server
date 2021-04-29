@@ -36,8 +36,13 @@ function SessionController(database) {
     });
   }
 
+  async function validateToken(_, response) {
+    return response.status(200).end();
+  }
+
   return {
     store,
+    validateToken,
   };
 }
 
