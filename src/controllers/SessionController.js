@@ -29,10 +29,11 @@ function SessionController(database) {
       return response.status(400).json({ message: 'Wrong password!' });
     }
 
-    const { id, username } = user;
+    const { id, name: username } = user;
 
     return response.json({
-      token: token.sign({ id, username }),
+      username,
+      token: token.sign({ id }),
     });
   }
 
