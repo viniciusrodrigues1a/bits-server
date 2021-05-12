@@ -27,6 +27,11 @@ function ScheduledTransactionController(database) {
       type,
     } = request.body;
 
+    if (timeSpan > timesToRepeat) {
+      return response.status(400).json({
+        message: "Time span doesn't coincide with times to repeat",
+      });
+    }
     const wallet = await database('wallet')
       .where({ id: walletId })
       .select('*')
@@ -37,6 +42,19 @@ function ScheduledTransactionController(database) {
         message: 'Wallet not found',
       });
     }
+
+    const category = await database('category')
+      .whereIn('id', categoriesId)
+      .select('*')
+      .first();
+
+    if (!category) {
+      return response.status(404).json({
+        message: 'Category not exist!',
+      });
+    }
+
+    console.log('****CATEGORY***', category);
 
     const cronExpression = formatCronExpression(type, timeSpan);
 
@@ -248,7 +266,7 @@ function ScheduledTransactionController(database) {
 
       return object;
     });
-
+    console.log('formated', formattedCategoriesId);
     await database('scheduled_transaction_category').insert(
       formattedCategoriesId
     );
