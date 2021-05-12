@@ -54,8 +54,6 @@ function ScheduledTransactionController(database) {
       });
     }
 
-    console.log('****CATEGORY***', category);
-
     const cronExpression = formatCronExpression(type, timeSpan);
 
     const data = {
@@ -266,7 +264,7 @@ function ScheduledTransactionController(database) {
 
       return object;
     });
-    console.log('formated', formattedCategoriesId);
+
     await database('scheduled_transaction_category').insert(
       formattedCategoriesId
     );
