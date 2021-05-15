@@ -1,5 +1,6 @@
 const { describe, it, expect } = require('@jest/globals');
 const api = require('../helpers/server');
+const token = require('../../src/utils/token');
 const authorizationHeader = require('../helpers/authToken');
 
 describe('Wallet creation endpoint', () => {
@@ -139,5 +140,21 @@ describe('Wallet deletion', () => {
 
     expect(response.statusCode).toEqual(401);
     expect(response.body.message).toEqual('This wallet is not yours');
+  });
+});
+
+describe('Wallet index endpoint', () => {
+  it("should be able to list all user's wallets", async () => {
+    const response = await api.get('/wallet').set(authorizationHeader);
+    expect(response.statusCode).toEqual(200);
+  });
+
+  it('should return 404 if no wallet is found', async () => {
+    const authToken = token.sign({ id: 1001, username: 'User' });
+    const response = await api
+      .get('/wallet')
+      .set({ Authorization: `Bearer ${authToken}` });
+
+    expect(response.statusCode).toEqual(404);
   });
 });

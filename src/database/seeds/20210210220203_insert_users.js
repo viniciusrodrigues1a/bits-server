@@ -25,6 +25,13 @@ exports.seed = function (knex) {
           password_hash: hashedPassword,
           salt,
         },
+        {
+          id: 1001,
+          name,
+          email: 'user2@gmail.com',
+          password_hash: hashedPassword,
+          salt,
+        },
       ])
     );
 };
