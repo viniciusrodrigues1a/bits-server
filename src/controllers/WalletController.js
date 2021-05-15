@@ -128,7 +128,9 @@ function WalletController(database) {
       .first();
 
     if (!wallets) {
-      return response.status(404).json({ message: 'User dont have a wallet' });
+      return response
+        .status(404)
+        .json({ message: "User doesn't have a wallet" });
     }
 
     return response.status(200).json(wallets);
