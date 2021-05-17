@@ -122,10 +122,7 @@ function WalletController(database) {
   async function index(request, response) {
     const { id } = request.userData;
 
-    const wallets = await database('wallet')
-      .where({ user_id: id })
-      .select('*')
-      .first();
+    const wallets = await database('wallet').where({ user_id: id }).select('*');
 
     if (!wallets) {
       return response
