@@ -149,6 +149,11 @@ describe('Wallet index endpoint', () => {
     expect(response.statusCode).toEqual(200);
   });
 
+  it('should return 2 wallets for user id 999', async () => {
+    const response = await api.get('/wallet').set(authorizationHeader);
+    expect(response.body.length).toEqual(2);
+  });
+
   it('should return 404 if no wallet is found', async () => {
     const authToken = token.sign({ id: 1001, username: 'User' });
     const response = await api
