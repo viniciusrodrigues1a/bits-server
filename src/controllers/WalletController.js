@@ -124,7 +124,7 @@ function WalletController(database) {
 
     const wallets = await database('wallet').where({ user_id: id }).select('*');
 
-    if (!wallets) {
+    if (wallets.length === 0) {
       return response
         .status(404)
         .json({ message: "User doesn't have a wallet" });
