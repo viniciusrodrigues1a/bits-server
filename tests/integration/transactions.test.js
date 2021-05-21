@@ -149,3 +149,31 @@ describe('Transaction index endpoint', () => {
     expect(response.statusCode).toEqual(200);
   });
 });
+
+describe('Transaction index month endpoint', () => {
+  it('should be able to list all transactions in day', async () => {
+    const response = await api
+      .get('/transactions/index/month')
+      .send({
+        date: '2021-05-21',
+      })
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+    expect(response.body.expensesAndRecipe).toEqual({
+      expenses: -400,
+      recipes: 460,
+    });
+  });
+
+  it('should NOT be able to list transactions, bacause the month it does not have transaction', async () => {
+    const response = await api
+      .get('/transactions/index/month')
+      .send({
+        date: '2022-05-21',
+      })
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(400);
+  });
+});

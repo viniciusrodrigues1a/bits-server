@@ -30,10 +30,14 @@ function Routes(database) {
   routes.delete('/transactions/:id', auth, transactionsController.destroy);
   routes.get('/transactions/:id', auth, transactionsController.show);
   routes.get('/transactions', auth, transactionsController.index);
-
-  const scheduledTransactionsController = ScheduledTransactionsController(
-    database
+  routes.get(
+    '/transactions/index/month',
+    auth,
+    transactionsController.getExpensesAndRecipesMonth
   );
+
+  const scheduledTransactionsController =
+    ScheduledTransactionsController(database);
   routes.post('/scheduled', auth, scheduledTransactionsController.store);
   routes.delete(
     '/scheduled/:id',
