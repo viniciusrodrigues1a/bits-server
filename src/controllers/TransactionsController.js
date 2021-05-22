@@ -132,9 +132,13 @@ function TransactionsController(database) {
       .select('id')
       .then(data => data.map(a => a.id));
 
+    const [year, month] = date.split('-');
+    const getLastDayMonth = new Date(year, month, 0);
+    const newDate = `${date}-${getLastDayMonth.getDate()}`;
+
     const transactions = await database('transaction')
       .whereIn('wallet_id', walletsUsers)
-      .where('created_at', '<', `${date}T00:00`)
+      .where('created_at', '<', `${newDate}T00:00`)
       .select('*');
 
     if (transactions.length <= 0) {
