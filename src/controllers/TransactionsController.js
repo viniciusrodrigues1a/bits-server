@@ -14,13 +14,8 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const {
-      amount,
-      incoming,
-      categoryId,
-      walletId,
-      description,
-    } = request.body;
+    const { amount, incoming, categoryId, walletId, description } =
+      request.body;
 
     const wallet = await database('wallet')
       .where({
@@ -114,9 +109,60 @@ function TransactionsController(database) {
   }
 
   async function index(request, response) {
-    const transactions = await database('transaction').select('*');
+    const { id: userId } = request.userData;
+
+    const walletsUsers = await database('wallet')
+      .where({ user_id: userId })
+      .select('id')
+      .then(data => data.map(a => a.id));
+
+    const transactions = await database('transaction')
+      .whereIn('wallet_id', walletsUsers)
+      .select('*');
 
     return response.status(200).json({ transactions });
+  }
+
+  async function getExpensesAndRecipesMonth(request, response) {
+    const { date } = request.body;
+    const { id: userId } = request.userData;
+
+    const walletsUsers = await database('wallet')
+      .where({ user_id: userId })
+      .select('id')
+      .then(data => data.map(a => a.id));
+
+    const [year, month] = date.split('-');
+
+    const getFirstDayMonth = new Date(year, month - 1, 0).getDate();
+    const getLastDayMonth = new Date(year, month, 0).getDate();
+
+    const from = `${year}-${month - 1}-${getFirstDayMonth}T21:00`;
+
+    const to = `${year}-${month}-${getLastDayMonth}T23:59`;
+
+    const transactions = await database('transaction')
+      .whereIn('wallet_id', walletsUsers)
+      .whereBetween('created_at', [from, to])
+      .select('*');
+
+    console.log(transactions);
+    if (transactions.length <= 0) {
+      return response.status(400).end();
+    }
+
+    const data = transactions.reduce(
+      (data, transaction, index) => {
+        transaction.amount < 0
+          ? (data.expenses += transaction.amount)
+          : (data.recipes += transaction.amount);
+
+        return data;
+      },
+      { expenses: 0, recipes: 0 }
+    );
+
+    return response.status(200).json({ expensesAndRecipe: data });
   }
 
   return {
@@ -125,6 +171,7 @@ function TransactionsController(database) {
     update,
     show,
     index,
+    getExpensesAndRecipesMonth,
   };
 }
 

@@ -52,7 +52,7 @@ describe('Scheduled transactions creation endpoint', () => {
       .post('/scheduled')
       .set(authorizationHeader)
       .send({
-        categoriesId: [98227],
+        categoriesId: [1848548],
         walletId: 999,
         amount: 10,
         timesToRepeat: 10,
