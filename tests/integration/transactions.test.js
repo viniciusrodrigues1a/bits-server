@@ -201,4 +201,17 @@ describe('Transaction index month endpoint', () => {
 
     expect(response.statusCode).toEqual(400);
   });
+
+  it('should return 400 if body is invalid', async () => {
+    const currentDate = new Date();
+
+    const response = await api
+      .get('/transactions/index/month')
+      .send({
+        year: currentDate.getFullYear(),
+      })
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toBe(400);
+  });
 });

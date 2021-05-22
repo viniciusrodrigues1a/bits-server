@@ -129,6 +129,15 @@ function TransactionsController(database) {
   }
 
   async function getExpensesAndIncomes(request, response) {
+    const bodySchema = yup.object().shape({
+      year: yup.number().min(2021).required(),
+      month: yup.number().min(1).max(12).required(),
+    });
+
+    if (!(await bodySchema.isValid(request.body))) {
+      return response.status(400).json({ message: 'Validation failed!' });
+    }
+
     const { year, month } = request.body;
     const { id: userId } = request.userData;
 
