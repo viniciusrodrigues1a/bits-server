@@ -37,8 +37,9 @@ function Routes(database) {
     transactionsController.getExpensesAndIncomes
   );
 
-  const scheduledTransactionsController =
-    ScheduledTransactionsController(database);
+  const scheduledTransactionsController = ScheduledTransactionsController(
+    database
+  );
   routes.post('/scheduled', auth, scheduledTransactionsController.store);
   routes.delete(
     '/scheduled/:id',
