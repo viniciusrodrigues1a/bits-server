@@ -129,7 +129,7 @@ function TransactionsController(database) {
   }
 
   async function getExpensesAndIncomes(request, response) {
-    const { date } = request.body;
+    const { year, month } = request.body;
     const { id: userId } = request.userData;
 
     const walletsUsers = await database('wallet')
@@ -137,14 +137,9 @@ function TransactionsController(database) {
       .select('id')
       .then(data => data.map(a => a.id));
 
-    const [year, month] = date.split('-');
-
-    const getFirstDayMonth = new Date(year, month - 1, 0).getDate();
-    const getLastDayMonth = new Date(year, month, 0).getDate();
-
-    const from = `${year}-${month - 1}-${getFirstDayMonth}T21:00`;
-
-    const to = `${year}-${month}-${getLastDayMonth}T23:59`;
+    const monthIndex = month - 1;
+    const from = new Date(year, monthIndex, 1);
+    const to = new Date(year, monthIndex + 1, 0);
 
     const transactions = await database('transaction')
       .whereIn('wallet_id', walletsUsers)
