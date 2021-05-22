@@ -133,14 +133,20 @@ function TransactionsController(database) {
       .then(data => data.map(a => a.id));
 
     const [year, month] = date.split('-');
-    const getLastDayMonth = new Date(year, month, 0);
-    const newDate = `${date}-${getLastDayMonth.getDate()}`;
+
+    const getFirstDayMonth = new Date(year, month - 1, 0).getDate();
+    const getLastDayMonth = new Date(year, month, 0).getDate();
+
+    const from = `${year}-${month - 1}-${getFirstDayMonth}T21:00`;
+
+    const to = `${year}-${month}-${getLastDayMonth}T23:59`;
 
     const transactions = await database('transaction')
       .whereIn('wallet_id', walletsUsers)
-      .where('created_at', '<', `${newDate}T00:00`)
+      .whereBetween('created_at', [from, to])
       .select('*');
 
+    console.log(transactions);
     if (transactions.length <= 0) {
       return response.status(400).end();
     }
