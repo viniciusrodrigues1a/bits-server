@@ -119,10 +119,25 @@ function WalletController(database) {
     return response.status(200).end();
   }
 
+  async function index(request, response) {
+    const { id } = request.userData;
+
+    const wallets = await database('wallet').where({ user_id: id }).select('*');
+
+    if (wallets.length === 0) {
+      return response
+        .status(404)
+        .json({ message: "User doesn't have a wallet" });
+    }
+
+    return response.status(200).json(wallets);
+  }
+
   return {
     store,
     update,
     show,
+    index,
     destroy,
   };
 }

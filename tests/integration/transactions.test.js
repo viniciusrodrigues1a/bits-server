@@ -155,7 +155,7 @@ describe('Transaction index month endpoint', () => {
     const response = await api
       .get('/transactions/index/month')
       .send({
-        date: '2021-05-21',
+        date: '2021-06',
       })
       .set(authorizationHeader);
 
@@ -170,7 +170,7 @@ describe('Transaction index month endpoint', () => {
     const response = await api
       .get('/transactions/index/month')
       .send({
-        date: '2022-05-21',
+        date: '2021-04',
       })
       .set(authorizationHeader);
 

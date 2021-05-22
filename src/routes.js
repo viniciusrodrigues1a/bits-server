@@ -23,6 +23,7 @@ function Routes(database) {
   routes.put('/wallet/:id', auth, walletController.update);
   routes.get('/wallet/:id', auth, walletController.show);
   routes.delete('/wallet/:id', auth, walletController.destroy);
+  routes.get('/wallet', auth, walletController.index);
 
   const transactionsController = TransactionsController(database);
   routes.post('/transactions', auth, transactionsController.store);

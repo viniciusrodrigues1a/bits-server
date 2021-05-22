@@ -127,9 +127,6 @@ function TransactionsController(database) {
     const { date } = request.body;
     const { id: userId } = request.userData;
 
-    const from = `${date}T00:00`;
-    const to = `${date}T24:00`;
-
     const walletsUsers = await database('wallet')
       .where({ user_id: userId })
       .select('id')
@@ -137,7 +134,7 @@ function TransactionsController(database) {
 
     const transactions = await database('transaction')
       .whereIn('wallet_id', walletsUsers)
-      .whereBetween('created_at', [from, to])
+      .where('created_at', '<', `${date}T00:00`)
       .select('*');
 
     if (transactions.length <= 0) {
@@ -154,7 +151,7 @@ function TransactionsController(database) {
       },
       { expenses: 0, recipes: 0 }
     );
-    console.log(data);
+
     return response.status(200).json({ expensesAndRecipe: data });
   }
 
