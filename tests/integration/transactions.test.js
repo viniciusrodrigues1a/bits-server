@@ -171,11 +171,13 @@ describe('Transaction index endpoint', () => {
 
 describe('Transaction index month endpoint', () => {
   it('should be able to list all transactions in day', async () => {
+    const currentDate = new Date();
+
     const response = await api
       .get('/transactions/index/month')
       .send({
-        year: 2021,
-        month: 5,
+        year: currentDate.getFullYear(),
+        month: currentDate.getMonth() + 1,
       })
       .set(authorizationHeader);
 
@@ -187,11 +189,13 @@ describe('Transaction index month endpoint', () => {
   });
 
   it('should NOT be able to list transactions, bacause the month it does not have transaction', async () => {
+    const currentDate = new Date();
+
     const response = await api
       .get('/transactions/index/month')
       .send({
-        year: 2021,
-        month: 4,
+        year: currentDate.getFullYear(),
+        month: currentDate.getMonth() - 1,
       })
       .set(authorizationHeader);
 
