@@ -174,14 +174,15 @@ describe('Transaction index month endpoint', () => {
     const response = await api
       .get('/transactions/index/month')
       .send({
-        date: '2021-05',
+        year: 2021,
+        month: 5,
       })
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
-    expect(response.body.expensesAndRecipe).toEqual({
-      expenses: -400,
-      recipes: 460,
+    expect(response.body.expensesAndIncome).toEqual({
+      expenses: 0,
+      incomes: 25,
     });
   });
 
@@ -189,7 +190,8 @@ describe('Transaction index month endpoint', () => {
     const response = await api
       .get('/transactions/index/month')
       .send({
-        date: '2021-04',
+        year: 2021,
+        month: 4,
       })
       .set(authorizationHeader);
 
