@@ -1,6 +1,25 @@
-const { describe, it, expect } = require('@jest/globals');
+const {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+} = require('@jest/globals');
 const api = require('../helpers/server');
 const authorizationHeader = require('../helpers/authToken');
+const database = require('../../src/database/connection');
+
+beforeEach(() =>
+  database('transaction').insert({
+    id: 777,
+    wallet_id: 999,
+    category_id: 999,
+    amount: 25,
+    description: 'My transaction',
+  })
+);
+
+afterEach(() => database('transaction').del());
 
 describe('Transaction creation endpoint', () => {
   it('should be able to create a new transaction with a positive amount (income)', async () => {
@@ -70,7 +89,7 @@ describe('Transaction creation endpoint', () => {
 describe('Destroy transaction endpoint', () => {
   it('should be able to delete a transaction', async () => {
     const response = await api
-      .delete('/transactions/1002')
+      .delete('/transactions/777')
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
@@ -89,7 +108,7 @@ describe('Destroy transaction endpoint', () => {
 describe('Update transaction endpoint', () => {
   it('should be able to update a transaction', async () => {
     const response = await api
-      .put('/transactions/1000')
+      .put('/transactions/777')
       .set(authorizationHeader)
       .send({
         amount: 15,
@@ -114,7 +133,7 @@ describe('Update transaction endpoint', () => {
 
   it('should NOT be able to update a transaction if no field is present', async () => {
     const response = await api
-      .put('/transactions/1000')
+      .put('/transactions/777')
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(400);
@@ -125,11 +144,11 @@ describe('Update transaction endpoint', () => {
 describe('Transaction show endpoint', () => {
   it('should be able to show a transaction', async () => {
     const response = await api
-      .get('/transactions/999')
+      .get('/transactions/777')
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
-    expect(response.body.id).toEqual(999);
+    expect(response.body.id).toEqual(777);
   });
 
   it("should NOT be able to show a transaction that doesn't exist", async () => {
