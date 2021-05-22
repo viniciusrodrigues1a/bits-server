@@ -128,7 +128,7 @@ function TransactionsController(database) {
     return response.status(200).json({ transactions });
   }
 
-  async function getExpensesAndRecipesMonth(request, response) {
+  async function getExpensesAndIncomes(request, response) {
     const { date } = request.body;
     const { id: userId } = request.userData;
 
@@ -160,14 +160,14 @@ function TransactionsController(database) {
       (data, transaction, index) => {
         transaction.amount < 0
           ? (data.expenses += transaction.amount)
-          : (data.recipes += transaction.amount);
+          : (data.incomes += transaction.amount);
 
         return data;
       },
-      { expenses: 0, recipes: 0 }
+      { expenses: 0, incomes: 0 }
     );
 
-    return response.status(200).json({ expensesAndRecipe: data });
+    return response.status(200).json({ expensesAndIncome: data });
   }
 
   return {
@@ -176,7 +176,7 @@ function TransactionsController(database) {
     update,
     show,
     index,
-    getExpensesAndRecipesMonth,
+    getExpensesAndIncomes,
   };
 }
 

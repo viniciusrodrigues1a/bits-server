@@ -34,7 +34,7 @@ function Routes(database) {
   routes.get(
     '/transactions/index/month',
     auth,
-    transactionsController.getExpensesAndRecipesMonth
+    transactionsController.getExpensesAndIncomes
   );
 
   const scheduledTransactionsController =
