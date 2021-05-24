@@ -129,16 +129,16 @@ function TransactionsController(database) {
   }
 
   async function getExpensesAndIncomes(request, response) {
-    const bodySchema = yup.object().shape({
+    const querySchema = yup.object().shape({
       year: yup.number().min(2021).required(),
       month: yup.number().min(1).max(12).required(),
     });
 
-    if (!(await bodySchema.isValid(request.body))) {
+    if (!(await querySchema.isValid(request.query))) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const { year, month } = request.body;
+    const { year, month } = request.query;
     const { id: userId } = request.userData;
 
     const walletsUsers = await database('wallet')

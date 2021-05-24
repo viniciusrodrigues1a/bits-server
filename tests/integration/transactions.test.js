@@ -172,13 +172,11 @@ describe('Transaction index endpoint', () => {
 describe('Transaction index month endpoint', () => {
   it('should be able to list all transactions in day', async () => {
     const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
 
     const response = await api
-      .get('/transactions/index/month')
-      .send({
-        year: currentDate.getFullYear(),
-        month: currentDate.getMonth() + 1,
-      })
+      .get(`/transactions/index/month?year=${year}&month=${month}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
@@ -190,13 +188,11 @@ describe('Transaction index month endpoint', () => {
 
   it('should NOT be able to list transactions, bacause the month it does not have transaction', async () => {
     const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() - 1;
 
     const response = await api
-      .get('/transactions/index/month')
-      .send({
-        year: currentDate.getFullYear(),
-        month: currentDate.getMonth() - 1,
-      })
+      .get(`/transactions/index/month?year=${year}&month=${month}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(400);
@@ -204,12 +200,10 @@ describe('Transaction index month endpoint', () => {
 
   it('should return 400 if body is invalid', async () => {
     const currentDate = new Date();
+    const year = currentDate.getFullYear();
 
     const response = await api
-      .get('/transactions/index/month')
-      .send({
-        year: currentDate.getFullYear(),
-      })
+      .get(`/transactions/index/month?year=${year}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toBe(400);
