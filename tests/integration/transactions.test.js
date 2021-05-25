@@ -10,13 +10,22 @@ const authorizationHeader = require('../helpers/authToken');
 const database = require('../../src/database/connection');
 
 beforeEach(() =>
-  database('transaction').insert({
-    id: 777,
-    wallet_id: 999,
-    category_id: 999,
-    amount: 25,
-    description: 'My transaction',
-  })
+  database('transaction').insert([
+    {
+      id: 777,
+      wallet_id: 999,
+      category_id: 999,
+      amount: 25,
+      description: 'My transaction',
+    },
+    {
+      id: 778,
+      wallet_id: 999,
+      category_id: 999,
+      amount: -25,
+      description: 'My transaction',
+    },
+  ])
 );
 
 afterEach(() => database('transaction').del());
@@ -181,8 +190,10 @@ describe('Transaction index month endpoint', () => {
 
     expect(response.statusCode).toEqual(200);
     expect(response.body.expensesAndIncome).toEqual({
-      expenses: 0,
-      incomes: 25,
+      ['999']: {
+        expenses: -25,
+        incomes: 25,
+      },
     });
   });
 
