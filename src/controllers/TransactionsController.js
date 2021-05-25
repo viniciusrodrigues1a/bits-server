@@ -14,13 +14,8 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const {
-      amount,
-      incoming,
-      categoryId,
-      walletId,
-      description,
-    } = request.body;
+    const { amount, incoming, categoryId, walletId, description } =
+      request.body;
 
     const wallet = await database('wallet')
       .where({
@@ -155,21 +150,24 @@ function TransactionsController(database) {
       .whereBetween('created_at', [from, to])
       .select('*');
 
-    console.log(transactions);
     if (transactions.length <= 0) {
       return response.status(400).end();
     }
 
-    const data = transactions.reduce(
-      (data, transaction, index) => {
-        transaction.amount < 0
-          ? (data.expenses += transaction.amount)
-          : (data.incomes += transaction.amount);
+    const data = transactions.reduce((data, transaction, index) => {
+      if (!data[`${transaction.wallet_id}`]) {
+        data[`${transaction.wallet_id}`] = {
+          expenses: 0,
+          incomes: 0,
+        };
+      }
 
-        return data;
-      },
-      { expenses: 0, incomes: 0 }
-    );
+      transaction.amount < 0
+        ? (data[`${transaction.wallet_id}`].expenses += transaction.amount)
+        : (data[`${transaction.wallet_id}`].incomes += transaction.amount);
+
+      return data;
+    }, {});
 
     return response.status(200).json({ expensesAndIncome: data });
   }

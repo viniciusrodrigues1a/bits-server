@@ -181,8 +181,10 @@ describe('Transaction index month endpoint', () => {
 
     expect(response.statusCode).toEqual(200);
     expect(response.body.expensesAndIncome).toEqual({
-      expenses: 0,
-      incomes: 25,
+      ['999']: {
+        expenses: 0,
+        incomes: 25,
+      },
     });
   });
 
