@@ -171,10 +171,36 @@ describe('Transaction show endpoint', () => {
 });
 
 describe('Transaction index endpoint', () => {
-  it('should be able to list all transactions', async () => {
-    const response = await api.get('/transactions').set(authorizationHeader);
+  it('should be able to list all transactions ', async () => {
+    const response = await api.get(`/transactions/`).set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
+  });
+
+  it('should be able to list all transactions with date ', async () => {
+    const date = '2021-05-26';
+    const response = await api
+      .get(`/transactions/?date=${date}`)
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+  });
+
+  it('should NOT be able to list all transactions, because this date is invalid ', async () => {
+    const date = 'asd15155153';
+    const response = await api
+      .get(`/transactions/?date=${date}`)
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(400);
+  });
+  it('should NOT be able to list all transactions, because this date it does not have transactions ', async () => {
+    const date = '2021-04-25T01:44:24.694Z';
+    const response = await api
+      .get(`/transactions/?date=${date}`)
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(404);
   });
 });
 
