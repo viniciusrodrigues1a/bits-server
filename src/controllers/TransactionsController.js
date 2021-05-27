@@ -169,6 +169,15 @@ function TransactionsController(database) {
       return data;
     }, {});
 
+    walletsUsers.map(id => {
+      if (!data[`${id}`]) {
+        data[`${id}`] = {
+          expenses: 0,
+          incomes: 0,
+        };
+      }
+    });
+
     return response.status(200).json({ expensesAndIncome: data });
   }
 
