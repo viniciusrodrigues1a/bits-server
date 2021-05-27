@@ -141,7 +141,7 @@ function TransactionsController(database) {
     const { year, month } = request.query;
     const { id: userId } = request.userData;
 
-    const walletsUsers = await database('wallet')
+    const walletsUsersIds = await database('wallet')
       .where({ user_id: userId })
       .select('id')
       .then(data => data.map(a => a.id));
@@ -151,37 +151,30 @@ function TransactionsController(database) {
     const to = new Date(year, monthIndex + 1, 0);
 
     const transactions = await database('transaction')
-      .whereIn('wallet_id', walletsUsers)
+      .whereIn('wallet_id', walletsUsersIds)
       .whereBetween('created_at', [from, to])
       .select('*');
 
-    if (transactions.length <= 0) {
-      return response.status(400).end();
-    }
+    let data = {};
 
-    const data = transactions.reduce((data, transaction, index) => {
-      if (!data[`${transaction.wallet_id}`]) {
-        data[`${transaction.wallet_id}`] = {
-          expenses: 0,
-          incomes: 0,
-        };
-      }
-
-      transaction.amount < 0
-        ? (data[`${transaction.wallet_id}`].expenses += transaction.amount)
-        : (data[`${transaction.wallet_id}`].incomes += transaction.amount);
-
-      return data;
-    }, {});
-
-    walletsUsers.map(id => {
-      if (!data[`${id}`]) {
-        data[`${id}`] = {
+    walletsUsersIds.forEach(id => {
+      if (!(id in data)) {
+        data[id] = {
           expenses: 0,
           incomes: 0,
         };
       }
     });
+
+    data = transactions.reduce((acc, transaction, _) => {
+      if (transaction.amount < 0) {
+        acc[`${transaction.wallet_id}`].expenses += transaction.amount;
+      } else {
+        acc[`${transaction.wallet_id}`].incomes += transaction.amount;
+      }
+
+      return acc;
+    }, data);
 
     return response.status(200).json({ expensesAndIncome: data });
   }
