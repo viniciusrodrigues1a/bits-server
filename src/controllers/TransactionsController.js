@@ -14,8 +14,13 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const { amount, incoming, categoryId, walletId, description } =
-      request.body;
+    const {
+      amount,
+      incoming,
+      categoryId,
+      walletId,
+      description,
+    } = request.body;
 
     const wallet = await database('wallet')
       .where({
