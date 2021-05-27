@@ -1,34 +1,44 @@
-const {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-} = require('@jest/globals');
+const { describe, it, expect, beforeEach } = require('@jest/globals');
 const api = require('../helpers/server');
 const authorizationHeader = require('../helpers/authToken');
 const database = require('../../src/database/connection');
 
-beforeEach(() =>
-  database('transaction').insert([
+beforeEach(async () => {
+  await teardown();
+  await setup();
+});
+
+async function teardown() {
+  await database('transaction').del();
+  await database('wallet').del().where({ id: 1 });
+}
+
+async function setup() {
+  await database('wallet').insert({
+    id: 1,
+    user_id: 999,
+    currency: 'BRL',
+    name: 'My wallet',
+    balance: 50,
+  });
+
+  await database('transaction').insert([
     {
       id: 777,
-      wallet_id: 999,
+      wallet_id: 1,
       category_id: 999,
       amount: 25,
       description: 'My transaction',
     },
     {
       id: 778,
-      wallet_id: 999,
+      wallet_id: 1,
       category_id: 999,
-      amount: -25,
+      amount: -30,
       description: 'My transaction',
     },
-  ])
-);
-
-afterEach(() => database('transaction').del());
+  ]);
+}
 
 describe('Transaction creation endpoint', () => {
   it('should be able to create a new transaction with a positive amount (income)', async () => {
@@ -179,7 +189,7 @@ describe('Transaction index endpoint', () => {
 });
 
 describe('Transaction index month endpoint', () => {
-  it('should be able to list all transactions in day', async () => {
+  it('should be able to list all wallets and the summary of their transactions', async () => {
     const currentDate = new Date();
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
@@ -189,15 +199,13 @@ describe('Transaction index month endpoint', () => {
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
-    expect(response.body.expensesAndIncome).toEqual({
-      ['999']: {
-        expenses: -25,
-        incomes: 25,
-      },
+    expect(response.body.expensesAndIncome['1']).toEqual({
+      expenses: -30,
+      incomes: 25,
     });
   });
 
-  it('should NOT be able to list transactions, bacause the month it does not have transaction', async () => {
+  it('should be able to list a wallet even if no transactions are found', async () => {
     const currentDate = new Date();
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() - 1;
@@ -206,10 +214,14 @@ describe('Transaction index month endpoint', () => {
       .get(`/transactions/index/month?year=${year}&month=${month}`)
       .set(authorizationHeader);
 
-    expect(response.statusCode).toEqual(400);
+    expect(response.statusCode).toEqual(200);
+    expect(response.body.expensesAndIncome['1']).toEqual({
+      expenses: 0,
+      incomes: 0,
+    });
   });
 
-  it('should return 400 if body is invalid', async () => {
+  it('should return 400 if query params are invalid', async () => {
     const currentDate = new Date();
     const year = currentDate.getFullYear();
 
