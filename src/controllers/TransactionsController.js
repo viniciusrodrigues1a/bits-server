@@ -114,16 +114,47 @@ function TransactionsController(database) {
   }
 
   async function index(request, response) {
+    const querySchema = yup.object().shape({
+      date: yup.date(),
+    });
+
+    if (!(await querySchema.isValid(request.query))) {
+      return response.status(400).json({ message: 'Validation failed!' });
+    }
+
     const { id: userId } = request.userData;
+    const { date, page = 1 } = request.query;
 
-    const walletsUsers = await database('wallet')
-      .where({ user_id: userId })
-      .select('id')
-      .then(data => data.map(a => a.id));
+    const limitElementsForPage = 10;
 
-    const transactions = await database('transaction')
-      .whereIn('wallet_id', walletsUsers)
-      .select('*');
+    const transactionsQuery = database('transaction')
+      .limit(limitElementsForPage)
+      .offset((page - 1) * limitElementsForPage)
+      .leftJoin('wallet', 'wallet.id', '=', 'transaction.wallet_id')
+      .innerJoin('user', 'user.id', '=', 'wallet.user_id')
+      .where('user.id', `${userId}`)
+      .orderBy('created_at', 'desc')
+      .select('transaction.*', 'wallet.name as wallet_name');
+
+    if (date) {
+      const [year, month, day] = date.split('-');
+
+      const newDate = new Date(year, month, Number(day) + 1);
+      const formatedNewDate = `${newDate.getFullYear()}-${newDate.getMonth()}-${newDate.getDate()}`;
+
+      transactionsQuery.andWhere(
+        'created_at',
+        '<=',
+        `${formatedNewDate}T03:00`
+      );
+    }
+    const transactions = await transactionsQuery;
+
+    if (transactions.length == 0) {
+      return response.status(404).json({
+        message: "you don't have transactions in date",
+      });
+    }
 
     return response.status(200).json({ transactions });
   }
