@@ -188,9 +188,16 @@ describe('Transaction index endpoint', () => {
   });
 
   it('should be able to list all transactions with date ', async () => {
-    const date = '2021-05-26';
+    const date = new Date();
+    const [year, month, day] = [
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    ];
+
+    const dateFormatted = `${year}-${month + 1}-${day}`;
     const response = await api
-      .get(`/transactions/?date=${date}`)
+      .get(`/transactions/?date=${dateFormatted}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
