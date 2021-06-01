@@ -163,13 +163,14 @@ function TransactionsController(database) {
     const querySchema = yup.object().shape({
       year: yup.number().min(2021).required(),
       month: yup.number().min(1).max(12).required(),
+      timezoneOffset: yup.number().integer(),
     });
 
     if (!(await querySchema.isValid(request.query))) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const { year, month } = request.query;
+    const { year, month, timezoneOffset = 0 } = request.query;
     const { id: userId } = request.userData;
 
     const walletsUsersIds = await database('wallet')
@@ -179,7 +180,7 @@ function TransactionsController(database) {
 
     const monthIndex = month - 1;
     const from = new Date(year, monthIndex, 1);
-    const to = new Date(year, monthIndex + 1, 0);
+    const to = new Date(year, monthIndex + 1, 0, 23 + timezoneOffset, 59, 59);
 
     const transactions = await database('transaction')
       .whereIn('wallet_id', walletsUsersIds)
