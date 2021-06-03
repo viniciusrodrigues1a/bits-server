@@ -14,13 +14,8 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const {
-      amount,
-      incoming,
-      categoryId,
-      walletId,
-      description,
-    } = request.body;
+    const { amount, incoming, categoryId, walletId, description } =
+      request.body;
 
     const wallet = await database('wallet')
       .where({
@@ -113,9 +108,20 @@ function TransactionsController(database) {
     return response.status(200).json({ ...transaction });
   }
 
+  function validateDate(date) {
+    var matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
+    if (!matches) {
+      return false;
+    }
+
+    const [year, month, day] = date.split('-');
+    const dateObject = new Date(year, month, day);
+  }
   async function index(request, response) {
     const querySchema = yup.object().shape({
-      date: yup.date(),
+      date: yup.string().transform(validateDate),
+      page: yup.number().positive(),
+      timezoneOffset: yup.number().integer(),
     });
 
     if (!(await querySchema.isValid(request.query))) {
@@ -137,16 +143,11 @@ function TransactionsController(database) {
       .select('transaction.*', 'wallet.name as wallet_name');
 
     if (date) {
-      const [year, month, day] = date.split('-');
-
-      const newDate = new Date(year, month, Number(day) + 1);
-      const formatedNewDate = `${newDate.getFullYear()}-${newDate.getMonth()}-${newDate.getDate()}`;
-
-      transactionsQuery.andWhere(
-        'created_at',
-        '<=',
-        `${formatedNewDate}T03:00`
-      );
+      let [year, month, day] = date.split('-');
+      month == '12' ? (month = '11') : null;
+      const formattedDate = new Date(year, month, day, 23, 59, 59);
+      console.log(formattedDate);
+      transactionsQuery.andWhere('created_at', '<=', formattedDate);
     }
     const transactions = await transactionsQuery;
 
