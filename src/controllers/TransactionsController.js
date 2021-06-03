@@ -156,7 +156,7 @@ function TransactionsController(database) {
       let [year, month, day] = date.split('-');
       month == '12' ? (month = '11') : null;
       const formattedDate = new Date(year, month, day, 23, 59, 59);
-      console.log(formattedDate);
+
       transactionsQuery.andWhere('created_at', '<=', formattedDate);
     }
     const transactions = await transactionsQuery;
