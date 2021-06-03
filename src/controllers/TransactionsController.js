@@ -139,7 +139,7 @@ function TransactionsController(database) {
     }
 
     const { id: userId } = request.userData;
-    const { date, page = 1 } = request.query;
+    const { date, page = 1, timezoneOffset = 0 } = request.query;
 
     const limitElementsForPage = 10;
 
@@ -155,8 +155,14 @@ function TransactionsController(database) {
     if (date) {
       let [year, month, day] = date.split('-');
       month == '12' ? (month = '11') : null;
-      const formattedDate = new Date(year, month, day, 23, 59, 59);
-
+      const formattedDate = new Date(
+        year,
+        month,
+        day,
+        23 + timezoneOffset,
+        59,
+        59
+      );
       transactionsQuery.andWhere('created_at', '<=', formattedDate);
     }
     const transactions = await transactionsQuery;
