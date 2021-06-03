@@ -108,16 +108,26 @@ function TransactionsController(database) {
     return response.status(200).json({ ...transaction });
   }
 
-  function validateDate(date) {
-    var matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
-    if (!matches) {
-      return false;
+  async function index(request, response) {
+    function validateDate(date) {
+      var matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
+      if (!matches) {
+        return false;
+      }
+
+      const [year, month, day] = date.split('-');
+      month == '12' ? (month = '11') : null;
+      const dateObject = new Date(year, month, day);
+
+      if (
+        Number(year) != dateObject.getFullYear() ||
+        Number(month) != dateObject.getMonth() ||
+        Number(day) != dateObject.getDate()
+      ) {
+        return false;
+      }
     }
 
-    const [year, month, day] = date.split('-');
-    const dateObject = new Date(year, month, day);
-  }
-  async function index(request, response) {
     const querySchema = yup.object().shape({
       date: yup.string().transform(validateDate),
       page: yup.number().positive(),
