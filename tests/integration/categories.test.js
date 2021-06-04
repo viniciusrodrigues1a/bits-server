@@ -1,6 +1,19 @@
-const { describe, it, expect } = require('@jest/globals');
+const { describe, it, expect, beforeAll, afterEach } = require('@jest/globals');
 const api = require('../helpers/server');
-const authorizationHeader = require('../helpers/authToken');
+const { createToken } = require('../helpers/token');
+const { databaseHelper } = require('../helpers/database');
+
+let authorizationHeader;
+
+beforeAll(async () => {
+  const { id } = await databaseHelper.insertUser();
+
+  authorizationHeader = createToken(id);
+});
+
+afterEach(async () => {
+  await databaseHelper.database('category').del();
+});
 
 describe('Category creation endpoint', () => {
   it('should be able to create a category', async () => {
@@ -40,12 +53,16 @@ describe('Category creation endpoint', () => {
   });
 
   it('should NOT be able to create a category if one of same icon_path already exists', async () => {
+    const iconPath = 'coffee';
+
+    await databaseHelper.insertCategory({ iconPath });
+
     const response = await api
       .post('/categories')
       .set(authorizationHeader)
       .send({
         name: 'Restaurant',
-        iconPath: 'coffee',
+        iconPath,
       });
 
     expect(response.statusCode).toEqual(400);
@@ -53,11 +70,15 @@ describe('Category creation endpoint', () => {
   });
 
   it('should NOT be able to create a category if one of same name already exists', async () => {
+    const name = 'Technology';
+
+    await databaseHelper.insertCategory({ name });
+
     const response = await api
       .post('/categories')
       .set(authorizationHeader)
       .send({
-        name: 'Technology',
+        name,
         iconPath: 'monitor',
       });
 
@@ -68,8 +89,10 @@ describe('Category creation endpoint', () => {
 
 describe('Category update endpoint', () => {
   it('should be able to update a category', async () => {
+    const { id } = await databaseHelper.insertCategory();
+
     const response = await api
-      .put('/categories/1001')
+      .put(`/categories/${id}`)
       .set(authorizationHeader)
       .send({
         name: 'Updated name',
@@ -102,8 +125,10 @@ describe('Category update endpoint', () => {
 
 describe('Category deletion endpoint', () => {
   it('should be able to delete a category', async () => {
+    const { id } = await databaseHelper.insertCategory();
+
     const response = await api
-      .delete('/categories/1002')
+      .delete(`/categories/${id}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
@@ -121,9 +146,14 @@ describe('Category deletion endpoint', () => {
 
 describe('Category show endpoint', () => {
   it('should be able to show a category', async () => {
-    const response = await api.get('/categories/999').set(authorizationHeader);
+    const { id, name } = await databaseHelper.insertCategory();
+
+    const response = await api
+      .get(`/categories/${id}`)
+      .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
+    expect(response.body.name).toEqual(name);
   });
 
   it("should NOT be able to show a category that doesn't exist", async () => {
@@ -137,8 +167,11 @@ describe('Category show endpoint', () => {
 });
 describe('Category index endpoint', () => {
   it('should be able to list all cateogires', async () => {
+    await databaseHelper.insertCategory();
+
     const response = await api.get('/categories').set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
+    expect(response.body.categories.length).toEqual(1);
   });
 });
