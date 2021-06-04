@@ -14,13 +14,8 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const {
-      amount,
-      incoming,
-      categoryId,
-      walletId,
-      description,
-    } = request.body;
+    const { amount, incoming, categoryId, walletId, description } =
+      request.body;
 
     const wallet = await database('wallet')
       .where({
@@ -114,8 +109,29 @@ function TransactionsController(database) {
   }
 
   async function index(request, response) {
+    function validateDate(date) {
+      var matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
+      if (!matches) {
+        return false;
+      }
+
+      const [year, month, day] = date.split('-');
+      month == '12' ? (month = '11') : null;
+      const dateObject = new Date(year, month, day);
+
+      if (
+        Number(year) != dateObject.getFullYear() ||
+        Number(month) != dateObject.getMonth() ||
+        Number(day) != dateObject.getDate()
+      ) {
+        return false;
+      }
+    }
+
     const querySchema = yup.object().shape({
-      date: yup.date(),
+      date: yup.string().transform(validateDate),
+      page: yup.number().positive(),
+      timezoneOffset: yup.number().integer(),
     });
 
     if (!(await querySchema.isValid(request.query))) {
@@ -123,7 +139,7 @@ function TransactionsController(database) {
     }
 
     const { id: userId } = request.userData;
-    const { date, page = 1 } = request.query;
+    const { date, page = 1, timezoneOffset = 0 } = request.query;
 
     const limitElementsForPage = 10;
 
@@ -137,16 +153,17 @@ function TransactionsController(database) {
       .select('transaction.*', 'wallet.name as wallet_name');
 
     if (date) {
-      const [year, month, day] = date.split('-');
-
-      const newDate = new Date(year, month, Number(day) + 1);
-      const formatedNewDate = `${newDate.getFullYear()}-${newDate.getMonth()}-${newDate.getDate()}`;
-
-      transactionsQuery.andWhere(
-        'created_at',
-        '<=',
-        `${formatedNewDate}T03:00`
+      let [year, month, day] = date.split('-');
+      month == '12' ? (month = '11') : null;
+      const formattedDate = new Date(
+        year,
+        month,
+        day,
+        23 + timezoneOffset,
+        59,
+        59
       );
+      transactionsQuery.andWhere('created_at', '<=', formattedDate);
     }
     const transactions = await transactionsQuery;
 

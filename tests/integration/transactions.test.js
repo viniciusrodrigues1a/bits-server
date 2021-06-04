@@ -188,9 +188,16 @@ describe('Transaction index endpoint', () => {
   });
 
   it('should be able to list all transactions with date ', async () => {
-    const date = '2021-05-26';
+    const date = new Date();
+    const [year, month, day] = [
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    ];
+
+    const dateFormatted = `${year}-${month}-${day}`;
     const response = await api
-      .get(`/transactions/?date=${date}`)
+      .get(`/transactions/?date=${dateFormatted}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
@@ -205,12 +212,21 @@ describe('Transaction index endpoint', () => {
     expect(response.statusCode).toEqual(400);
   });
   it('should NOT be able to list all transactions, because this date it does not have transactions ', async () => {
-    const date = '2021-04-25T01:44:24.694Z';
+    const date = '2021-1-21';
     const response = await api
       .get(`/transactions/?date=${date}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(404);
+  });
+
+  it('should NOT be able to list all transactions, because this date is invalid', async () => {
+    const date = '1859-1-29';
+    const response = await api
+      .get(`/transactions/?date=${date}`)
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(400);
   });
 });
 
