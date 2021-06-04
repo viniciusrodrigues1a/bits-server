@@ -1,7 +1,21 @@
-const { describe, it, expect } = require('@jest/globals');
+const { describe, it, expect, beforeAll, afterEach } = require('@jest/globals');
 const api = require('../helpers/server');
-const token = require('../../src/utils/token');
-const authorizationHeader = require('../helpers/authToken');
+const { createToken } = require('../helpers/token');
+const { databaseHelper } = require('../helpers/database');
+
+let authorizationHeader;
+let userId;
+
+beforeAll(async () => {
+  const { id } = await databaseHelper.insertUser();
+
+  userId = id;
+  authorizationHeader = createToken(id);
+});
+
+afterEach(async () => {
+  await databaseHelper.database('wallet').del();
+});
 
 describe('Wallet creation endpoint', () => {
   it('should be able to create a wallet', async () => {
@@ -33,9 +47,13 @@ describe('Wallet creation endpoint', () => {
     expect(response.body.message).toEqual('Validation failed!');
   });
 
-  it('should NOT be able to create a wallet if one of same name already exists', async () => {
+  it('should NOT be able to create a wallet if user already has one of same name', async () => {
+    const name = 'My wallet';
+
+    await databaseHelper.insertWallet({ name, userId });
+
     const response = await api.post('/wallet').set(authorizationHeader).send({
-      name: 'My wallet',
+      name,
       balance: 100,
       currency: 'BRL',
     });
@@ -47,8 +65,10 @@ describe('Wallet creation endpoint', () => {
 
 describe('Wallet update endpoint', () => {
   it("should be able to update a wallet's balance", async () => {
+    const { id } = await databaseHelper.insertWallet({ userId });
+
     const response = await api
-      .put('/wallet/999')
+      .put(`/wallet/${id}`)
       .set(authorizationHeader)
       .send({
         balance: 110,
@@ -58,11 +78,13 @@ describe('Wallet update endpoint', () => {
   });
 
   it("should be able to update a wallet's name", async () => {
+    const { id } = await databaseHelper.insertWallet({ userId });
+
     const response = await api
-      .put('/wallet/999')
+      .put(`/wallet/${id}`)
       .set(authorizationHeader)
       .send({
-        balance: 110,
+        name: 'Updated name',
       });
 
     expect(response.statusCode).toEqual(200);
@@ -93,15 +115,13 @@ describe('Wallet update endpoint', () => {
 
 describe('Wallet show endpoint', () => {
   it('should be able to show a wallet', async () => {
-    const response = await api.get('/wallet/999').set(authorizationHeader);
+    const { id, balance } = await databaseHelper.insertWallet({ userId });
+
+    const response = await api.get(`/wallet/${id}`).set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
-    expect(response.body).toHaveProperty('id');
-    expect(response.body).toHaveProperty('user_id');
-    expect(response.body).toHaveProperty('currency');
-    expect(response.body).toHaveProperty('name');
-    expect(response.body).toHaveProperty('balance');
-    expect(response.body).toHaveProperty('description');
+    expect(response.body.id).toEqual(id);
+    expect(response.body.balance).toEqual(balance);
   });
 
   it("should NOT be able to show a wallet if it doesn't exist", async () => {
@@ -112,7 +132,9 @@ describe('Wallet show endpoint', () => {
   });
 
   it('should NOT be able to show a wallet that is not owned by the user making the request', async () => {
-    const response = await api.get('/wallet/1000').set(authorizationHeader);
+    const { id } = await databaseHelper.insertWallet();
+
+    const response = await api.get(`/wallet/${id}`).set(authorizationHeader);
 
     expect(response.statusCode).toEqual(401);
     expect(response.body.message).toEqual('This wallet is not yours');
@@ -121,7 +143,9 @@ describe('Wallet show endpoint', () => {
 
 describe('Wallet deletion', () => {
   it('should be able to delete a wallet', async () => {
-    const response = await api.delete('/wallet/1001').set(authorizationHeader);
+    const { id } = await databaseHelper.insertWallet({ userId });
+
+    const response = await api.delete(`/wallet/${id}`).set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
   });
@@ -136,7 +160,9 @@ describe('Wallet deletion', () => {
   });
 
   it('should NOT be able to delete a wallet that is not owned by the user making the request', async () => {
-    const response = await api.delete('/wallet/1002').set(authorizationHeader);
+    const { id } = await databaseHelper.insertWallet();
+
+    const response = await api.delete(`/wallet/${id}`).set(authorizationHeader);
 
     expect(response.statusCode).toEqual(401);
     expect(response.body.message).toEqual('This wallet is not yours');
@@ -145,20 +171,20 @@ describe('Wallet deletion', () => {
 
 describe('Wallet index endpoint', () => {
   it("should be able to list all user's wallets", async () => {
-    const response = await api.get('/wallet').set(authorizationHeader);
-    expect(response.statusCode).toEqual(200);
-  });
+    await databaseHelper.insertWallet({ userId });
+    await databaseHelper.insertWallet({ userId });
 
-  it('should return 2 wallets for user id 999', async () => {
     const response = await api.get('/wallet').set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
     expect(response.body.length).toEqual(2);
   });
 
   it('should return 404 if no wallet is found', async () => {
-    const authToken = token.sign({ id: 1001, username: 'User' });
-    const response = await api
-      .get('/wallet')
-      .set({ Authorization: `Bearer ${authToken}` });
+    const { id } = await databaseHelper.insertUser();
+    const token = createToken(id);
+
+    const response = await api.get('/wallet').set(token);
 
     expect(response.statusCode).toEqual(404);
   });
