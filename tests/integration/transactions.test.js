@@ -1,81 +1,68 @@
-const { describe, it, expect, beforeEach } = require('@jest/globals');
+const {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+} = require('@jest/globals');
 const api = require('../helpers/server');
-const authorizationHeader = require('../helpers/authToken');
-const database = require('../../src/database/connection');
+const { createToken } = require('../helpers/token');
+const { databaseHelper } = require('../helpers/database');
 
-beforeEach(async () => {
-  await teardown();
-  await setup();
+let authorizationHeader;
+let userId;
+
+beforeAll(async () => {
+  const { id } = await databaseHelper.insertUser();
+
+  userId = id;
+  authorizationHeader = createToken(id);
 });
 
-async function teardown() {
-  await database('transaction').del();
-  await database('wallet').del().where({ id: 1 });
-}
-
-async function setup() {
-  await database('wallet').insert({
-    id: 1,
-    user_id: 999,
-    currency: 'BRL',
-    name: 'My wallet',
-    balance: 50,
-  });
-
-  await database('transaction').insert([
-    {
-      id: 777,
-      wallet_id: 1,
-      category_id: 999,
-      amount: 25,
-      description: 'My transaction',
-    },
-    {
-      id: 778,
-      wallet_id: 1,
-      category_id: 999,
-      amount: -30,
-      description: 'My transaction',
-    },
-  ]);
-}
+afterEach(async () => {
+  await databaseHelper.database('wallet').del();
+  await databaseHelper.database('category').del();
+  await databaseHelper.database('transaction').del();
+});
 
 describe('Transaction creation endpoint', () => {
-  it('should be able to create a new transaction with a positive amount (income)', async () => {
+  let walletId;
+  let categoryId;
+
+  beforeEach(async () => {
+    walletId = (await databaseHelper.insertWallet()).id;
+    categoryId = (await databaseHelper.insertCategory()).id;
+  });
+
+  it('should be able to create a new transaction with a positive amount', async () => {
     const response = await api
       .post('/transactions')
       .set(authorizationHeader)
       .send({
         amount: 400,
-        incoming: true,
-        walletId: 999,
-        categoryId: 999,
+        walletId,
+        categoryId,
         description: 'My transaction',
       });
 
     expect(response.statusCode).toEqual(201);
-    expect(response.body).toHaveProperty('id');
-    expect(response.body).toHaveProperty('category_id');
-    expect(response.body).toHaveProperty('wallet_id');
-    expect(response.body).toHaveProperty('wallet_id');
-    expect(response.body).toHaveProperty('incoming');
-    expect(response.body).toHaveProperty('description');
-    expect(response.body).toHaveProperty('created_at');
+    expect(response.body.amount).toEqual(400);
   });
 
-  it('should be able to create a new transaction with a negative amount (expense)', async () => {
+  it('should be able to create a new transaction with a negative amount', async () => {
     const response = await api
       .post('/transactions')
       .set(authorizationHeader)
       .send({
         amount: -400,
-        incoming: true,
-        walletId: 999,
-        categoryId: 999,
+        walletId,
+        categoryId,
         description: 'My transaction',
       });
 
     expect(response.statusCode).toEqual(201);
+    expect(response.body.amount).toEqual(-400);
   });
 
   it('should NOT be able to create a new transaction if required fields are missing', async () => {
@@ -83,8 +70,7 @@ describe('Transaction creation endpoint', () => {
       .post('/transactions')
       .set(authorizationHeader)
       .send({
-        incoming: true,
-        walletId: 999,
+        walletId,
       });
 
     expect(response.statusCode).toEqual(400);
@@ -107,8 +93,10 @@ describe('Transaction creation endpoint', () => {
 
 describe('Destroy transaction endpoint', () => {
   it('should be able to delete a transaction', async () => {
+    const { id } = await databaseHelper.insertTransaction();
+
     const response = await api
-      .delete('/transactions/777')
+      .delete(`/transactions/${id}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
@@ -126,16 +114,22 @@ describe('Destroy transaction endpoint', () => {
 
 describe('Update transaction endpoint', () => {
   it('should be able to update a transaction', async () => {
+    const { id } = await databaseHelper.insertTransaction();
+
+    const newDescriptionMsg = 'My updated transaction description';
+
     const response = await api
-      .put('/transactions/777')
+      .put(`/transactions/${id}`)
       .set(authorizationHeader)
       .send({
         amount: 15,
+        description: newDescriptionMsg,
       });
 
     expect(response.statusCode).toEqual(200);
-    expect(response.body).toHaveProperty('id');
+    expect(response.body.id).toEqual(id);
     expect(response.body.amount).toEqual(15);
+    expect(response.body.description).toEqual(newDescriptionMsg);
   });
 
   it("should NOT be able to update a transaction that doesn't exist", async () => {
@@ -162,12 +156,15 @@ describe('Update transaction endpoint', () => {
 
 describe('Transaction show endpoint', () => {
   it('should be able to show a transaction', async () => {
+    const { id, description } = await databaseHelper.insertTransaction();
+
     const response = await api
-      .get('/transactions/777')
+      .get(`/transactions/${id}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
-    expect(response.body.id).toEqual(777);
+    expect(response.body.id).toEqual(id);
+    expect(response.body.description).toEqual(description);
   });
 
   it("should NOT be able to show a transaction that doesn't exist", async () => {
@@ -181,13 +178,20 @@ describe('Transaction show endpoint', () => {
 });
 
 describe('Transaction index endpoint', () => {
-  it('should be able to list all transactions ', async () => {
-    const response = await api.get(`/transactions/`).set(authorizationHeader);
-
-    expect(response.statusCode).toEqual(200);
+  beforeEach(async () => {
+    const { id: walletId } = await databaseHelper.insertWallet({ userId });
+    await databaseHelper.insertTransaction({ walletId });
+    await databaseHelper.insertTransaction({ walletId });
   });
 
-  it('should be able to list all transactions with date ', async () => {
+  it('should be able to list all transactions that the signed in user has', async () => {
+    const response = await api.get('/transactions/').set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+    expect(response.body.transactions.length).toEqual(2);
+  });
+
+  it('should be able to list all transactions with date', async () => {
     const date = new Date();
     const [year, month, day] = [
       date.getFullYear(),
@@ -203,7 +207,7 @@ describe('Transaction index endpoint', () => {
     expect(response.statusCode).toEqual(200);
   });
 
-  it('should NOT be able to list all transactions, because this date is invalid ', async () => {
+  it('should NOT be able to list all transactions, because this date is invalid', async () => {
     const date = 'asd15155153';
     const response = await api
       .get(`/transactions/?date=${date}`)
@@ -211,7 +215,8 @@ describe('Transaction index endpoint', () => {
 
     expect(response.statusCode).toEqual(400);
   });
-  it('should NOT be able to list all transactions, because this date it does not have transactions ', async () => {
+
+  it('should NOT be able to list all transactions, because this date it does not have transactions', async () => {
     const date = '2021-1-21';
     const response = await api
       .get(`/transactions/?date=${date}`)
@@ -231,6 +236,12 @@ describe('Transaction index endpoint', () => {
 });
 
 describe('Transaction index month endpoint', () => {
+  beforeAll(async () => {
+    const { id } = await databaseHelper.insertWallet({ userId });
+    await databaseHelper.insertTransaction({ id });
+    await databaseHelper.insertTransaction({ id });
+  });
+
   it('should be able to list all wallets and the summary of their transactions', async () => {
     const currentDate = new Date();
     const year = currentDate.getFullYear();
@@ -241,10 +252,7 @@ describe('Transaction index month endpoint', () => {
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
-    expect(response.body.expensesAndIncome['1']).toEqual({
-      expenses: -30,
-      incomes: 25,
-    });
+    expect(Object.keys(response.body.expensesAndIncome).length).toEqual(1);
   });
 
   it('should be able to list a wallet even if no transactions are found', async () => {
@@ -252,12 +260,16 @@ describe('Transaction index month endpoint', () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() - 1;
 
+    const { id } = await databaseHelper.insertWallet({
+      userId,
+    });
+
     const response = await api
       .get(`/transactions/index/month?year=${year}&month=${month}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
-    expect(response.body.expensesAndIncome['1']).toEqual({
+    expect(response.body.expensesAndIncome[id]).toEqual({
       expenses: 0,
       incomes: 0,
     });
