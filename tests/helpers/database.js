@@ -77,6 +77,24 @@ function databaseHelper() {
         .returning('*');
       return transaction;
     },
+
+    async insertBudget(data = {}) {
+      const { walletId } = data;
+
+      const { id: newWalletId } = await this.insertWallet();
+
+      const [budget] = await database('budget')
+        .insert({
+          amount_paid: data.amountPaid || generateInt(10, 100),
+          amount_total: data.amountTotal || generateInt(200, 400),
+          name: data.name || generateString(),
+          description: data.description || generateString(),
+          wallet_id: walletId || newWalletId,
+        })
+        .returning('*');
+
+      return budget;
+    },
   };
 }
 

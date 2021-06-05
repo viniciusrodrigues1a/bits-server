@@ -1,22 +1,36 @@
-const { describe, it, expect } = require('@jest/globals');
+const { describe, it, expect, afterEach } = require('@jest/globals');
 const api = require('../helpers/server');
+const { databaseHelper } = require('../helpers/database');
+
+afterEach(async () => {
+  await databaseHelper.database('scheduled_transaction_category').del();
+  await databaseHelper.database('budget_categories').del();
+  await databaseHelper.database('budget').del();
+  await databaseHelper.database('transaction').del();
+  await databaseHelper.database('category').del();
+  await databaseHelper.database('scheduled_transaction').del();
+  await databaseHelper.database('wallet').del();
+  await databaseHelper.database('user').del();
+});
 
 describe('Account creation endpoint', () => {
   it('should be able to create a new user', async () => {
-    const res = await api.post('/signup').send({
+    const response = await api.post('/signup').send({
       name: 'Wellington Júnior',
       email: 'wellington53@gmail.com',
       password: 'pa55word',
     });
 
-    expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty('id');
+    expect(response.statusCode).toEqual(201);
+    expect(response.body).toHaveProperty('id');
   });
 
   it('should NOT be able to create a new user if email is already in use', async () => {
+    await databaseHelper.insertUser({ email: 'inuse@gmail.com' });
+
     const response = await api.post('/signup').send({
       name: 'Rodrigo',
-      email: 'user1@gmail.com',
+      email: 'inuse@gmail.com',
       password: 'pa55word',
     });
 

@@ -5,14 +5,21 @@ const { databaseHelper } = require('../helpers/database');
 
 let authorizationHeader;
 
-beforeAll(async () => {
+beforeEach(async () => {
   const { id } = await databaseHelper.insertUser();
 
   authorizationHeader = createToken(id);
 });
 
 afterEach(async () => {
+  await databaseHelper.database('scheduled_transaction_category').del();
+  await databaseHelper.database('budget_categories').del();
+  await databaseHelper.database('budget').del();
+  await databaseHelper.database('transaction').del();
   await databaseHelper.database('category').del();
+  await databaseHelper.database('scheduled_transaction').del();
+  await databaseHelper.database('wallet').del();
+  await databaseHelper.database('user').del();
 });
 
 describe('Category creation endpoint', () => {

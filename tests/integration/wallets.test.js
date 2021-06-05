@@ -6,7 +6,7 @@ const { databaseHelper } = require('../helpers/database');
 let authorizationHeader;
 let userId;
 
-beforeAll(async () => {
+beforeEach(async () => {
   const { id } = await databaseHelper.insertUser();
 
   userId = id;
@@ -14,7 +14,14 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
+  await databaseHelper.database('scheduled_transaction_category').del();
+  await databaseHelper.database('budget_categories').del();
+  await databaseHelper.database('budget').del();
+  await databaseHelper.database('transaction').del();
+  await databaseHelper.database('category').del();
+  await databaseHelper.database('scheduled_transaction').del();
   await databaseHelper.database('wallet').del();
+  await databaseHelper.database('user').del();
 });
 
 describe('Wallet creation endpoint', () => {

@@ -2,7 +2,6 @@ const {
   describe,
   it,
   expect,
-  beforeAll,
   beforeEach,
   afterEach,
 } = require('@jest/globals');
@@ -13,7 +12,7 @@ const { databaseHelper } = require('../helpers/database');
 let authorizationHeader;
 let userId;
 
-beforeAll(async () => {
+beforeEach(async () => {
   const { id } = await databaseHelper.insertUser();
 
   userId = id;
@@ -21,9 +20,14 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  await databaseHelper.database('wallet').del();
-  await databaseHelper.database('category').del();
+  await databaseHelper.database('scheduled_transaction_category').del();
+  await databaseHelper.database('budget_categories').del();
+  await databaseHelper.database('budget').del();
   await databaseHelper.database('transaction').del();
+  await databaseHelper.database('category').del();
+  await databaseHelper.database('scheduled_transaction').del();
+  await databaseHelper.database('wallet').del();
+  await databaseHelper.database('user').del();
 });
 
 describe('Transaction creation endpoint', () => {
@@ -145,8 +149,10 @@ describe('Update transaction endpoint', () => {
   });
 
   it('should NOT be able to update a transaction if no field is present', async () => {
+    const { id } = await databaseHelper.insertTransaction();
+
     const response = await api
-      .put('/transactions/777')
+      .put(`/transactions/${id}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(400);
@@ -182,6 +188,7 @@ describe('Transaction index endpoint', () => {
     const { id: walletId } = await databaseHelper.insertWallet({ userId });
     await databaseHelper.insertTransaction({ walletId });
     await databaseHelper.insertTransaction({ walletId });
+    await databaseHelper.insertTransaction();
   });
 
   it('should be able to list all transactions that the signed in user has', async () => {
@@ -236,9 +243,8 @@ describe('Transaction index endpoint', () => {
 });
 
 describe('Transaction index month endpoint', () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
     const { id } = await databaseHelper.insertWallet({ userId });
-    await databaseHelper.insertTransaction({ id });
     await databaseHelper.insertTransaction({ id });
   });
 
@@ -253,6 +259,21 @@ describe('Transaction index month endpoint', () => {
 
     expect(response.statusCode).toEqual(200);
     expect(Object.keys(response.body.expensesAndIncome).length).toEqual(1);
+  });
+
+  it("should NOT list transactions made to wallets that the user doesn't own", async () => {
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+
+    const { id } = await databaseHelper.insertWallet();
+
+    const response = await api
+      .get(`/transactions/index/month?year=${year}&month=${month}`)
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+    expect(response.body.expensesAndIncome[id]).toBe(undefined);
   });
 
   it('should be able to list a wallet even if no transactions are found', async () => {

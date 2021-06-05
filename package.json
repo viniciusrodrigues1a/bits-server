@@ -6,9 +6,10 @@
   "license": "MIT",
   "scripts": {
     "start": "nodemon src/index.js",
-    "database:reset": "knex migrate:rollback --all && knex migrate:latest && yarn knex seed:run",
+    "database:migrate": "knex migrate:rollback --all && knex migrate:latest",
+    "database:reset": "database:migrate && yarn knex seed:run",
     "test": "cross-env NODE_ENV=test jest --force-exit --testTimeout=10000 --runInBand",
-    "pretest": "cross-env NODE_ENV=test yarn database:reset"
+    "pretest": "cross-env NODE_ENV=test yarn database:migrate"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
