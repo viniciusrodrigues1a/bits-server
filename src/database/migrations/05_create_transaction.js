@@ -2,6 +2,10 @@ exports.up = function (knex) {
   return knex.schema.createTable('transaction', table => {
     table.increments('id').primary();
     table
+      .integer('transaction_belongs')
+      .references('id')
+      .inTable('create_credit_or_debt_transaction');
+    table
       .integer('wallet_id')
       .references('id')
       .inTable('wallet')

@@ -5,14 +5,17 @@ exports.up = function (knex) {
       .integer('wallet_id')
       .references('id')
       .inTable('wallet')
-      .onDelete('CASCADE')
-      .onUpdate('CASCADE');
+      .onDelete('CASCADE');
+
     table.integer('amount');
     table.string('dateNow');
     table.string('deadline');
     table.string('from');
     table.string('description');
+    table.integer('type').defaultTo(1);
   });
 };
 
-exports.down = function (knex) {};
+exports.down = function (knex) {
+  return knex.schema.dropTable('credit');
+};
