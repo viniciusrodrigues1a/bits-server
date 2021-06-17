@@ -6,7 +6,7 @@ module.exports = class TransactionBelongsCredit extends TransactionBuilder {
   }
 
   async store(data) {
-    const { debt_or_credit_id, wallet_Id, ...rest } = data;
+    const { wallet_id, debt_or_credit_id, ...rest } = data;
 
     await this.verifyWalletExist(wallet_id);
 
@@ -17,7 +17,7 @@ module.exports = class TransactionBelongsCredit extends TransactionBuilder {
     const transaction = super.store({
       ...rest,
       transaction_belongs,
-      wallet_Id,
+      wallet_id,
     });
 
     return transaction;
