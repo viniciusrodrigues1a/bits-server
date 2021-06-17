@@ -1,5 +1,5 @@
 const yup = require('yup');
-const TransactionBelongsCredit = require('../models/TransactionBelongsCredit');
+const TransactionBelongsCredit = require('../models/transactionsBelongsCredit/TransactionBelongsCreditStore');
 
 function CreditController(database) {
   const transactionBelongsCredit = new TransactionBelongsCredit(database);

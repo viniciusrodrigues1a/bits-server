@@ -1,6 +1,10 @@
 const yup = require('yup');
 
+const TransactionModel = require('../models/transactions/TransactionStore');
+
 function TransactionsController(database) {
+  const transactionModel = new TransactionModel(database);
+
   async function store(request, response) {
     const bodySchema = yup.object().shape({
       walletId: yup.number().positive().required(),
@@ -17,30 +21,43 @@ function TransactionsController(database) {
     const { amount, incoming, categoryId, walletId, description } =
       request.body;
 
-    const wallet = await database('wallet')
-      .where({
-        id: walletId,
-      })
-      .select('*')
-      .first();
+    // const wallet = await database('wallet')
+    //   .where({
+    //     id: walletId,
+    //   })
+    //   .select('*')
+    //   .first();
 
-    if (!wallet) {
+    // if (!wallet) {
+    //   return response.status(404).json({
+    //     message: 'Wallet not found',
+    //   });
+    // }
+
+    // const [transaction] = await database('transaction')
+    //   .insert({
+    //     category_id: categoryId,
+    //     wallet_id: walletId,
+    //     amount,
+    //     incoming,
+    //     description,
+    //   })
+    //   .returning('*');
+    try {
+      const transaction = await transactionModel.store({
+        amount,
+        incoming,
+        category_id: categoryId,
+        wallet_id: walletId,
+        description,
+      });
+
+      return response.status(201).json({ ...transaction });
+    } catch (err) {
       return response.status(404).json({
         message: 'Wallet not found',
       });
     }
-
-    const [transaction] = await database('transaction')
-      .insert({
-        category_id: categoryId,
-        wallet_id: walletId,
-        amount,
-        incoming,
-        description,
-      })
-      .returning('*');
-
-    return response.status(201).json({ ...transaction });
   }
 
   async function destroy(request, response) {
@@ -57,7 +74,7 @@ function TransactionsController(database) {
       });
     }
 
-    await database('transaction').where({ id }).del();
+    await transactionModel.destroy(id);
 
     return response.status(200).end();
   }
@@ -80,13 +97,11 @@ function TransactionsController(database) {
       return response.status(404).json({ message: 'Transaction not found' });
     }
 
-    const [updatedTransaction] = await database('transaction')
-      .where({ id })
-      .update({
-        amount,
-        description,
-      })
-      .returning('*');
+    const updatedTransaction = await transactionModel.update(
+      amount,
+      description,
+      id
+    );
 
     return response.status(200).json({ ...updatedTransaction });
   }
