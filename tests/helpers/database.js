@@ -95,6 +95,25 @@ function databaseHelper() {
 
       return budget;
     },
+
+    async insertCredit(data = {}) {
+      const { walletId } = data;
+
+      const { id: newWalletId } = await this.insertWallet();
+
+      const [credit] = await database('credit')
+        .insert({
+          dateNow: new Date(),
+          deadline: new Date(),
+          from: 'Julin',
+          description: 'my payment',
+          wallet_id: walletId || newWalletId,
+          amount: generateInt(200, 400),
+        })
+        .returning('*');
+
+      return credit;
+    },
   };
 }
 
