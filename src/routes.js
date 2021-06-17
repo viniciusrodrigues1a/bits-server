@@ -7,6 +7,7 @@ const TransactionsController = require('./controllers/TransactionsController');
 const ScheduledTransactionsController = require('./controllers/ScheduledTransactionsController');
 const CategoriesController = require('./controllers/CategoriesController');
 const BudgetsController = require('./controllers/BudgetsController');
+const CreditController = require('./controllers/CreditController');
 const auth = require('./middleware/auth');
 
 function Routes(database) {
@@ -37,9 +38,8 @@ function Routes(database) {
     transactionsController.getExpensesAndIncomes
   );
 
-  const scheduledTransactionsController = ScheduledTransactionsController(
-    database
-  );
+  const scheduledTransactionsController =
+    ScheduledTransactionsController(database);
   routes.post('/scheduled', auth, scheduledTransactionsController.store);
   routes.delete(
     '/scheduled/:id',
@@ -62,6 +62,11 @@ function Routes(database) {
   routes.put('/budgets/:id', auth, budgetsController.update);
   routes.get('/budgets/:id', auth, budgetsController.show);
   routes.get('/budgets', auth, budgetsController.index);
+
+  const creditController = CreditController(database);
+  routes.post('/credit', auth, creditController.store);
+
+  routes.post('/credit/transaction', auth, creditController.storeTransaction);
 
   return routes;
 }
