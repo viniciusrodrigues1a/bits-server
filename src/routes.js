@@ -65,6 +65,8 @@ function Routes(database) {
 
   const creditController = CreditController(database);
   routes.post('/credit', auth, creditController.store);
+  routes.get('/credit', auth, creditController.index);
+  routes.get('/credit/:id', auth, creditController.show);
 
   routes.post('/credit/transaction', auth, creditController.storeTransaction);
 
