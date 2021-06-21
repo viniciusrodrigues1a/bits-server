@@ -1,14 +1,13 @@
-const verifyAmountForOperationInWallet = require('../wallet/methods/verifyAmountForOperationInWallet');
 const TransactionVerifyWalletExist = require('./methods/TransactionVerifyWalletExist');
+const verifyAmountForOperationInWallet = require('../wallet/methods/verifyAmountForOperationInWallet');
 const Dinero = require('dinero.js');
-
-module.exports = class TransactionStore {
+module.exports = class TransactionBelongsCreditOrDebt {
   constructor(database) {
     this.database = database;
   }
 
-  async execute(data) {
-    const { wallet_id, amount, ...rest } = data;
+  async store(data) {
+    const { wallet_id, debt_or_credit_id, amount, ...rest } = data;
 
     await TransactionVerifyWalletExist(this.database, wallet_id);
 
@@ -21,15 +20,24 @@ module.exports = class TransactionStore {
     if (!balance) {
       throw new Error('wallet dont enought found');
     }
+
     let transaction;
     await this.database.transaction(async trx => {
       try {
+        const [transaction_belongs] = await this.database(
+          'create_credit_or_debt_transaction'
+        )
+          .transacting(trx)
+          .insert({ debt_or_credit_id })
+          .returning('id');
+
         transaction = await this.database('transaction')
           .transacting(trx)
           .insert({
             ...rest,
-            wallet_id,
             amount,
+            wallet_id,
+            transaction_belongs,
           })
           .returning('*');
 
@@ -47,19 +55,12 @@ module.exports = class TransactionStore {
       }
       await trx.commit();
     });
-
     return transaction;
   }
 
-  async update(amount, description, id) {
-    const [updatedTransaction] = await this.database('transaction')
-      .where({ id })
-      .update({
-        amount,
-        description,
-      })
-      .returning('*');
-
-    return updatedTransaction;
+  async insertDebtId(debt_or_credit_id) {
+    return await this.database('create_credit_or_debt_transaction')
+      .insert(debt_or_credit_id)
+      .returning('id');
   }
 };

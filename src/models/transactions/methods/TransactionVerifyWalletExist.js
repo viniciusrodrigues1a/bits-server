@@ -1,4 +1,4 @@
-module.exports = async function VerifyWalletExist(db, wallet_id) {
+module.exports = async function (db, wallet_id) {
   const wallet = await db('wallet')
     .where({
       id: wallet_id,
