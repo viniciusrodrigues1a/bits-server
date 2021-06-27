@@ -34,7 +34,7 @@ module.exports = class TransactionUpdate {
     }).subtract(Dinero({ amount: oldAmount, currency }));
 
     const newBalance = Dinero({
-      amount: balance,
+      amount: oldBalance.getAmount(),
       currency,
     }).add(Dinero({ amount: newAmount, currency }));
 

@@ -16,7 +16,7 @@ module.exports = class TransactionBelongsCreditOrDebt {
       amount,
       wallet_id
     );
-
+    console.log('pato');
     if (!balance) {
       throw new Error('wallet dont enought found');
     }
@@ -40,7 +40,7 @@ module.exports = class TransactionBelongsCreditOrDebt {
             transaction_belongs,
           })
           .returning('*');
-
+        console.log(amount, 'OLHA O AMOUNT AI');
         const newBalance = Dinero({
           amount: balance,
           currency,
