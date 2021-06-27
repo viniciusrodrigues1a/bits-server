@@ -7,7 +7,7 @@ exports.up = function (knex) {
       .inTable('wallet')
       .onDelete('CASCADE');
 
-    table.integer('amount');
+    table.integer('amount_necessary');
     table.string('dateNow');
     table.string('deadline');
     table.string('from');
