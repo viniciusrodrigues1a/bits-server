@@ -1,8 +1,24 @@
 const yup = require('yup');
+const CreditDestroy = require('../models/credit/CreditDestroy');
+const CreditIndex = require('../models/credit/CreditIndex');
+const CreditShow = require('../models/credit/CreditShow');
+const CreditStore = require('../models/credit/CreditStore');
+const CreditUpdate = require('../models/credit/CreditUpdate');
 const TransactionBelongsStoreCreditOrDebt = require('../models/transactions/TransactionBelongsStoreCreditOrDebt');
+const TransactionBelongsUpdateCreditOrDebt = require('../models/transactions/TransactionBelongUpdateCreditOrDebt');
+
 function CreditController(database) {
   const transactionBelongsStoreCreditOrDebt =
     new TransactionBelongsStoreCreditOrDebt(database);
+  const transactionBelongsUpdateCreditOrDebt =
+    new TransactionBelongsUpdateCreditOrDebt(database);
+
+  const creditUpdate = new CreditUpdate({ database, table: 'credit' });
+  const creditDestroy = new CreditDestroy({ database, table: 'credit' });
+  const creditStore = new CreditStore({ database, table: 'credit' });
+  const creditIndex = new CreditIndex({ database, table: 'credit' });
+  const creditShow = new CreditShow({ database, table: 'credit' });
+
   async function store(request, response) {
     const bodySchema = yup.object().shape({
       dateNow: yup.date().required(),
@@ -21,7 +37,7 @@ function CreditController(database) {
       request.body;
 
     try {
-      const insertCreditInTable = await database('credit').insert({
+      const insertCreditInTable = await creditStore.execute({
         dateNow,
         deadline,
         from,
@@ -44,63 +60,37 @@ function CreditController(database) {
   async function index(request, response) {
     const { id } = request.userData;
 
-    const walletsIds = await database('wallet')
-      .where({ user_id: id })
-      .select('id')
-      .then(data => data.map(a => a.id));
-
-    const credits = await database('credit')
-      .whereIn('credit.wallet_id', walletsIds)
-      .leftJoin(
-        'create_credit_or_debt_transaction',
-        'create_credit_or_debt_transaction.debt_or_credit_id',
-        '=',
-        'credit.id'
-      )
-      .leftJoin(
-        'transaction',
-        'create_credit_or_debt_transaction.id',
-        '=',
-        'transaction.transaction_belongs'
-      )
-      .select(
-        'credit.id AS credit_id',
-        'credit.amount_necessary',
-        'credit.from',
-        'credit.wallet_id',
-        'credit.description',
-        'transaction.amount',
-        'credit.dateNow',
-        'credit.deadline'
-      );
-
-    const tratedObjects = credits.reduce((iterator, object, index) => {
-      function verifyObjectAlreadyExist(object) {
-        const objectFind = iterator.findIndex(
-          ({ credit_id }) => credit_id == object.credit_id
-        );
-        if (!objectFind) {
-          iterator[objectFind].amount += object.amount;
-          return iterator;
-        } else {
-          iterator.push(object);
-        }
-      }
-      index == 0 ? iterator.push(object) : verifyObjectAlreadyExist(object);
-      return iterator;
-    }, []);
-
-    return response.status(200).json(tratedObjects);
+    const credit = await creditIndex.execute(id);
+    return response.status(200).json(credit);
   }
-  async function update() {
+  async function update(request, response) {
     const bodySchema = yup.object().shape({
       dateNow: yup.date(),
       deadline: yup.date(),
       from: yup.string(),
       description: yup.string(),
       walletId: yup.number(),
-      amount: yup.number().positive(),
+      amount_necessary: yup.number().positive(),
     });
+
+    const { id: creditOrDebtId } = request.params;
+
+    if (!(await bodySchema.isValid(request.body)) && !creditId) {
+      return response.status(400).json({ message: 'Validation failed!' });
+    }
+
+    const data = request.body;
+    try {
+      const creditOperation = await creditUpdate.execute({
+        creditOrDebtId,
+        ...data,
+      });
+
+      return response.status(200).json(creditOperation);
+    } catch (err) {
+      console.log(err);
+      return response.status(501).end();
+    }
   }
 
   async function storeTransaction(request, response) {
@@ -132,36 +122,78 @@ function CreditController(database) {
       return response.status(501).end();
     }
   }
+
+  async function updatedTransaction(request, response) {
+    const bodySchema = yup.object().shape({
+      transactionId: yup.number().positive(),
+      walletId: yup.number().positive(),
+      amount: yup.number().positive(),
+      notion: yup.string(),
+    });
+
+    if (!(await bodySchema.isValid(request.body))) {
+      return response.status(400).json({ message: 'Validation failed!' });
+    }
+    const { amount, notion } = request.body;
+
+    const { id: transaction_id } = request.params;
+
+    try {
+      const updatedTransaction =
+        await transactionBelongsUpdateCreditOrDebt.execute({
+          newAmount: amount,
+          description: notion,
+          transaction_id,
+        });
+      return response.status(200).json(updatedTransaction);
+    } catch (err) {
+      console.log(err);
+      return response.status(501).json({
+        message: 'internal server error!',
+      });
+    }
+  }
   async function show(request, response) {
-    const { id } = request.userData;
+    const { id: userId } = request.userData;
     const { id: creditId } = request.params;
 
-    const walletsIds = await database('wallet')
-      .where({ user_id: id })
-      .select('id')
-      .then(data => data.map(a => a.id));
+    // const walletsIds = await database('wallet')
+    //   .where({ user_id: userId })
+    //   .select('id')
+    //   .then(data => data.map(a => a.id));
 
-    const transactions = await database('create_credit_or_debt_transaction')
-      .whereIn('transaction.wallet_id', walletsIds)
-      .andWhere('create_credit_or_debt_transaction.debt_or_credit_id', creditId)
-      .leftJoin(
-        'transaction',
-        'transaction.transaction_belongs',
-        '=',
-        'create_credit_or_debt_transaction.id'
-      );
+    // const transactions = await database('create_credit_or_debt_transaction')
+    //   .whereIn('transaction.wallet_id', walletsIds)
+    //   .andWhere('create_credit_or_debt_transaction.debt_or_credit_id', creditId)
+    //   .leftJoin(
+    //     'transaction',
+    //     'transaction.transaction_belongs',
+    //     '=',
+    //     'create_credit_or_debt_transaction.id'
+    //   );
+
+    const transactions = await creditShow.execute(userId, creditId);
 
     return response.status(200).json(transactions);
   }
 
   async function destroy(request, response) {
-    return;
+    const { id } = request.params;
+
+    try {
+      await creditDestroy.execute(id);
+
+      return response.status(204).end(0);
+    } catch (err) {
+      return response.status(501).end();
+    }
   }
   return {
     store,
     update,
     index,
     storeTransaction,
+    updatedTransaction,
     show,
     destroy,
   };

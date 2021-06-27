@@ -74,8 +74,8 @@ class CronJobsHandler {
           .where({ id: transaction.wallet_id })
           .update({ balance: wallet.balance - transaction.amount });
       });
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   }
 }
