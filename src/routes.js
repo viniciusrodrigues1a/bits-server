@@ -9,6 +9,7 @@ const CategoriesController = require('./controllers/CategoriesController');
 const BudgetsController = require('./controllers/BudgetsController');
 const CreditController = require('./controllers/CreditController');
 const auth = require('./middleware/auth');
+const DebtController = require('./controllers/DebtController');
 
 function Routes(database) {
   const routes = express.Router();
@@ -67,9 +68,24 @@ function Routes(database) {
   routes.post('/credit', auth, creditController.store);
   routes.get('/credit', auth, creditController.index);
   routes.get('/credit/:id', auth, creditController.show);
+  routes.put('/credit/:id', auth, creditController.update);
+  routes.delete('/credit/:id', auth, creditController.destroy);
 
   routes.post('/credit/transaction', auth, creditController.storeTransaction);
+  routes.put(
+    '/credit/transaction/:id',
+    auth,
+    creditController.updatedTransaction
+  );
 
+  const debtController = new DebtController(database);
+  routes.post('/debt', auth, debtController.store);
+  routes.get('/debt', auth, debtController.index);
+  routes.get('/debt/:id', auth, debtController.show);
+  routes.post('/debt/transaction', auth, debtController.storeTransaction);
+  routes.put('/debt/transaction/:id', auth, debtController.updatedTransaction);
+  routes.put('/debt/:id', auth, debtController.update);
+  routes.delete('/debt/:id', auth, debtController.destroy);
   return routes;
 }
 
