@@ -50,9 +50,13 @@ describe('Transaction creation endpoint', () => {
         categoryId,
         description: 'My transaction',
       });
-    const walletBalance = await databaseHelper.getWallet(walletId);
+    const { balance } = await databaseHelper
+      .database('wallet')
+      .where({ id: walletId })
+      .select('*')
+      .first();
 
-    expect(walletBalance.balance).toEqual(1200);
+    expect(balance).toEqual(1200);
     expect(response.statusCode).toEqual(201);
     expect(response.body.amount).toEqual(400);
   });
@@ -67,9 +71,13 @@ describe('Transaction creation endpoint', () => {
         categoryId,
         description: 'My transaction',
       });
-    const walletBalance = await databaseHelper.getWallet(walletId);
+    const { balance } = await databaseHelper
+      .database('wallet')
+      .where({ id: walletId })
+      .select('*')
+      .first();
 
-    expect(walletBalance.balance).toEqual(400);
+    expect(balance).toEqual(400);
     expect(response.statusCode).toEqual(201);
     expect(response.body.amount).toEqual(-400);
   });
@@ -116,10 +124,6 @@ describe('Destroy transaction endpoint', () => {
       walletId,
       amount: 100,
     });
-    await databaseHelper
-      .database('wallet')
-      .where({ id: walletId })
-      .update({ balance: 300 });
 
     const response = await api
       .delete(`/transactions/${id}`)
@@ -131,13 +135,13 @@ describe('Destroy transaction endpoint', () => {
       .select('*')
       .first();
 
-    const getWalletAmount = await databaseHelper
+    const { balance } = await databaseHelper
       .database('wallet')
       .where({ id: walletId })
       .select('*')
       .first();
 
-    expect(getWalletAmount.balance).toEqual(200);
+    expect(balance).toEqual(200);
     expect(response.statusCode).toEqual(200);
     expect(getDeletedTransaction).toEqual(undefined);
   });
@@ -178,17 +182,21 @@ describe('Update transaction endpoint', () => {
       .put(`/transactions/${transactionId}`)
       .set(authorizationHeader)
       .send({
-        amount: 20,
+        amount: 15,
         description: newDescriptionMsg,
       });
 
-    const walletBalance = await databaseHelper.getWallet(walletId);
+    const { balance } = await databaseHelper
+      .database('wallet')
+      .where({ id: walletId })
+      .select('*')
+      .first();
 
-    expect(walletBalance.balance).toEqual(220);
     expect(response.statusCode).toEqual(200);
     expect(response.body.id).toEqual(transactionId);
-    expect(response.body.amount).toEqual(20);
+    expect(response.body.amount).toEqual(15);
     expect(response.body.description).toEqual(newDescriptionMsg);
+    expect(balance).toEqual(215);
   });
 
   it("should NOT be able to update a transaction that doesn't exist", async () => {
