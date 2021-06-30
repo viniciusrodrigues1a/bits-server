@@ -15,5 +15,5 @@ exports.up = function (knex) {
   });
 };
 exports.down = function (knex) {
-  return knex.schema.dropTable('wallet');
+  return knex.raw('DROP TABLE wallet CASCADE');
 };

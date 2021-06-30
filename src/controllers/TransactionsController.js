@@ -1,6 +1,13 @@
 const yup = require('yup');
+const TransactionDestroy = require('../models/transactions/TransactionDestroy');
+const TransactionStore = require('../models/transactions/TransactionStore');
+const TransactionUpdate = require('../models/transactions/TransactionUpdate');
 
 function TransactionsController(database) {
+  const transactionStore = new TransactionStore(database);
+  const transactionUpdate = new TransactionUpdate(database);
+  const transactionDestroy = new TransactionDestroy(database);
+
   async function store(request, response) {
     const bodySchema = yup.object().shape({
       walletId: yup.number().positive().required(),
@@ -17,78 +24,62 @@ function TransactionsController(database) {
     const { amount, incoming, categoryId, walletId, description } =
       request.body;
 
-    const wallet = await database('wallet')
-      .where({
-        id: walletId,
-      })
-      .select('*')
-      .first();
+    try {
+      const [transaction] = await transactionStore.execute({
+        amount,
+        incoming,
+        category_id: categoryId,
+        wallet_id: walletId,
+        description,
+      });
 
-    if (!wallet) {
+      return response.status(201).json({ ...transaction });
+    } catch (err) {
       return response.status(404).json({
         message: 'Wallet not found',
       });
     }
-
-    const [transaction] = await database('transaction')
-      .insert({
-        category_id: categoryId,
-        wallet_id: walletId,
-        amount,
-        incoming,
-        description,
-      })
-      .returning('*');
-
-    return response.status(201).json({ ...transaction });
   }
 
   async function destroy(request, response) {
     const { id } = request.params;
 
-    const transaction = await database('transaction')
-      .where({ id })
-      .select('*')
-      .first();
+    try {
+      await transactionDestroy.execute(id);
 
-    if (!transaction) {
-      return response.status(400).json({
-        message: 'Transaction not found',
+      return response.status(200).end();
+    } catch (err) {
+      if ((err.message = 'transaction not found')) {
+        return response.status(400).json({
+          message: 'Transaction not found',
+        });
+      }
+
+      return response.status(500).json({
+        message: 'internal server error',
       });
     }
-
-    await database('transaction').where({ id }).del();
-
-    return response.status(200).end();
   }
 
   async function update(request, response) {
     const { amount, description } = request.body;
 
+    const { id: transaction_id } = request.params;
     if (!amount && !description) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const { id } = request.params;
+    try {
+      const updatedTransaction = await transactionUpdate.execute({
+        newAmount: amount,
+        description,
+        transaction_id,
+      });
 
-    const transaction = await database('transaction')
-      .where({ id })
-      .select('*')
-      .first();
-
-    if (!transaction) {
+      return response.status(200).json({ ...updatedTransaction });
+    } catch (err) {
       return response.status(404).json({ message: 'Transaction not found' });
     }
-
-    const [updatedTransaction] = await database('transaction')
-      .where({ id })
-      .update({
-        amount,
-        description,
-      })
-      .returning('*');
-
-    return response.status(200).json({ ...updatedTransaction });
   }
 
   async function show(request, response) {

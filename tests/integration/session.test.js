@@ -10,6 +10,7 @@ afterEach(async () => {
   await databaseHelper.database('transaction').del();
   await databaseHelper.database('category').del();
   await databaseHelper.database('scheduled_transaction').del();
+  await databaseHelper.database('credit').del();
   await databaseHelper.database('wallet').del();
   await databaseHelper.database('user').del();
 });

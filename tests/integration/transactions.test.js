@@ -26,6 +26,7 @@ afterEach(async () => {
   await databaseHelper.database('transaction').del();
   await databaseHelper.database('category').del();
   await databaseHelper.database('scheduled_transaction').del();
+  await databaseHelper.database('credit').del();
   await databaseHelper.database('wallet').del();
   await databaseHelper.database('user').del();
 });
@@ -35,7 +36,7 @@ describe('Transaction creation endpoint', () => {
   let categoryId;
 
   beforeEach(async () => {
-    walletId = (await databaseHelper.insertWallet()).id;
+    walletId = (await databaseHelper.insertWallet({ balance: 800 })).id;
     categoryId = (await databaseHelper.insertCategory()).id;
   });
 
@@ -49,7 +50,13 @@ describe('Transaction creation endpoint', () => {
         categoryId,
         description: 'My transaction',
       });
+    const { balance } = await databaseHelper
+      .database('wallet')
+      .where({ id: walletId })
+      .select('*')
+      .first();
 
+    expect(balance).toEqual(1200);
     expect(response.statusCode).toEqual(201);
     expect(response.body.amount).toEqual(400);
   });
@@ -64,7 +71,13 @@ describe('Transaction creation endpoint', () => {
         categoryId,
         description: 'My transaction',
       });
+    const { balance } = await databaseHelper
+      .database('wallet')
+      .where({ id: walletId })
+      .select('*')
+      .first();
 
+    expect(balance).toEqual(400);
     expect(response.statusCode).toEqual(201);
     expect(response.body.amount).toEqual(-400);
   });
@@ -96,14 +109,41 @@ describe('Transaction creation endpoint', () => {
 });
 
 describe('Destroy transaction endpoint', () => {
+  let walletId;
+
+  beforeEach(async () => {
+    walletId = (
+      await databaseHelper.insertWallet({
+        userId,
+        balance: 200,
+      })
+    ).id;
+  });
   it('should be able to delete a transaction', async () => {
-    const { id } = await databaseHelper.insertTransaction();
+    const { id } = await databaseHelper.insertTransaction({
+      walletId,
+      amount: 100,
+    });
 
     const response = await api
       .delete(`/transactions/${id}`)
       .set(authorizationHeader);
 
+    const getDeletedTransaction = await databaseHelper
+      .database('transaction')
+      .where({ id })
+      .select('*')
+      .first();
+
+    const { balance } = await databaseHelper
+      .database('wallet')
+      .where({ id: walletId })
+      .select('*')
+      .first();
+
+    expect(balance).toEqual(200);
     expect(response.statusCode).toEqual(200);
+    expect(getDeletedTransaction).toEqual(undefined);
   });
 
   it("should NOT be able to delete a transaction that doesn't exist", async () => {
@@ -117,23 +157,46 @@ describe('Destroy transaction endpoint', () => {
 });
 
 describe('Update transaction endpoint', () => {
-  it('should be able to update a transaction', async () => {
-    const { id } = await databaseHelper.insertTransaction();
+  let transactionId;
+  let walletId;
 
+  beforeEach(async () => {
+    walletId = (
+      await databaseHelper.insertWallet({
+        userId,
+        balance: 200,
+      })
+    ).id;
+    transactionId = (
+      await databaseHelper.insertTransaction({
+        walletId,
+        amount: 10,
+        description: '',
+      })
+    ).id;
+  });
+  it('should be able to update a transaction', async () => {
     const newDescriptionMsg = 'My updated transaction description';
 
     const response = await api
-      .put(`/transactions/${id}`)
+      .put(`/transactions/${transactionId}`)
       .set(authorizationHeader)
       .send({
         amount: 15,
         description: newDescriptionMsg,
       });
 
+    const { balance } = await databaseHelper
+      .database('wallet')
+      .where({ id: walletId })
+      .select('*')
+      .first();
+
     expect(response.statusCode).toEqual(200);
-    expect(response.body.id).toEqual(id);
+    expect(response.body.id).toEqual(transactionId);
     expect(response.body.amount).toEqual(15);
     expect(response.body.description).toEqual(newDescriptionMsg);
+    expect(balance).toEqual(215);
   });
 
   it("should NOT be able to update a transaction that doesn't exist", async () => {
