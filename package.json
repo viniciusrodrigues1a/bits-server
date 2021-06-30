@@ -7,7 +7,7 @@
   "scripts": {
     "start": "nodemon src/index.js",
     "database:migrate": "knex migrate:rollback --all && knex migrate:latest",
-    "database:reset": "database:migrate && yarn knex seed:run",
+    "database:reset": "yarn database:migrate && yarn knex seed:run",
     "test": "cross-env NODE_ENV=test jest --force-exit --testTimeout=10000 --runInBand",
     "pretest": "cross-env NODE_ENV=test yarn database:migrate"
   },
