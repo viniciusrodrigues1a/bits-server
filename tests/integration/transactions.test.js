@@ -261,17 +261,53 @@ describe('Transaction index endpoint', () => {
     expect(response.body.transactions.length).toEqual(2);
   });
 
-  it('should be able to list all transactions with date', async () => {
-    const date = new Date();
-    const [year, month, day] = [
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-    ];
+  it('should be able to list all transactions with date and timezone of Japan', async () => {
+    const dateInBrasil = new Date();
 
-    const dateFormatted = `${year}-${month}-${day}`;
+    const timezoneOffsetJapan = -540;
+    const dateInJapan = new Date(
+      2021,
+      6,
+      1,
+      dateInBrasil.getHours(),
+      dateInBrasil.getMinutes() - timezoneOffsetJapan + 1
+    ).getTime();
+
     const response = await api
-      .get(`/transactions/?date=${dateFormatted}`)
+      .get(
+        `/transactions/?date=${dateInJapan}&timezoneOffset=${timezoneOffsetJapan}`
+      )
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+  });
+
+  it('should be able to list all transactions with date and timezone of Mexico', async () => {
+    const dateInBrasil = new Date();
+
+    const timezoneOffsetMexico = 60 * 5;
+    const dateInMexico = new Date(
+      2021,
+      6,
+      1,
+      dateInBrasil.getHours(),
+      dateInBrasil.getMinutes() - timezoneOffsetMexico + 1
+    ).getTime();
+
+    const response = await api
+      .get(
+        `/transactions/?date=${dateInMexico}&timezoneOffset=${timezoneOffsetMexico}`
+      )
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+  });
+
+  it('should be able to list all transactions with date and timezone of Brasil', async () => {
+    const date = new Date().getTime();
+
+    const response = await api
+      .get(`/transactions/?date=${date}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
@@ -287,9 +323,9 @@ describe('Transaction index endpoint', () => {
   });
 
   it('should NOT be able to list all transactions, because this date it does not have transactions', async () => {
-    const date = '2021-1-21';
+    const noTransactions = 157784760000;
     const response = await api
-      .get(`/transactions/?date=${date}`)
+      .get(`/transactions/?date=${noTransactions}`)
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(404);
@@ -311,13 +347,68 @@ describe('Transaction index month endpoint', () => {
     await databaseHelper.insertTransaction({ id });
   });
 
-  it('should be able to list all wallets and the summary of their transactions', async () => {
+  it('should be able to list all wallets and the summary of their transactions with timezone brasil', async () => {
     const currentDate = new Date();
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
+    const timezoneOffset = currentDate.getTimezoneOffset();
 
     const response = await api
-      .get(`/transactions/index/month?year=${year}&month=${month}`)
+      .get(
+        `/transactions/index/month?year=${year}&month=${month}&timezoneOffset=${timezoneOffset}`
+      )
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+    expect(Object.keys(response.body.expensesAndIncome).length).toEqual(1);
+  });
+
+  it('should be able to list all wallets and the summary of their transactions with timezone japan', async () => {
+    const dateInBrasil = new Date();
+
+    const timezoneOffsetJapan = -540;
+    const dateInJapan = new Date(
+      2021,
+      6,
+      1,
+      dateInBrasil.getHours(),
+      dateInBrasil.getMinutes() + timezoneOffsetJapan + 1
+    );
+
+    // const currentDate = new Date();
+    const year = dateInJapan.getFullYear();
+    const month = dateInJapan.getMonth() + 1;
+
+    const response = await api
+      .get(
+        `/transactions/index/month?year=${year}&month=${month}&timezoneOffset=${timezoneOffsetJapan}`
+      )
+      .set(authorizationHeader);
+
+    expect(response.statusCode).toEqual(200);
+    expect(Object.keys(response.body.expensesAndIncome).length).toEqual(1);
+  });
+
+  it('should be able to list all wallets and the summary of their transactions with timezone Mexico', async () => {
+    const dateInBrasil = new Date();
+
+    const timezoneOffsetMexico = 300;
+    const dateInMexico = new Date(
+      2021,
+      6,
+      1,
+      dateInBrasil.getHours(),
+      dateInBrasil.getMinutes() + timezoneOffsetMexico + 1
+    );
+
+    // const currentDate = new Date();
+    const year = dateInMexico.getFullYear();
+    const month = dateInMexico.getMonth() + 1;
+
+    const response = await api
+      .get(
+        `/transactions/index/month?year=${year}&month=${month}&timezoneOffset=${timezoneOffsetMexico}`
+      )
       .set(authorizationHeader);
 
     expect(response.statusCode).toEqual(200);
