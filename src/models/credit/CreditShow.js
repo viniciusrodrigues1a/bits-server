@@ -4,7 +4,6 @@ module.exports = class CreditShow {
     this.table = table;
   }
   async execute(userId, creditOrDebtId) {
-    console.log(this.table, creditOrDebtId);
     const walletsIds = await this.database('wallet')
       .where({ user_id: userId })
       .select('id')

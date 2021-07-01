@@ -50,7 +50,7 @@ module.exports = class CreditIndex {
       index == 0 ? iterator.push(object) : verifyObjectAlreadyExist(object);
       return iterator;
     }, []);
-    console.log(tratedObjects, 'OLHA ESSE TREM AI');
+
     return tratedObjects;
   }
 };

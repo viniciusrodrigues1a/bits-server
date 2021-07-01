@@ -134,7 +134,7 @@ function TransactionsController(database) {
       const dateTime = Temporal.Instant.fromEpochMilliseconds(date).add({
         minutes: timezoneOffset,
       });
-      console.log(dateTime, 'OLHA O DATETIME');
+
       transactionsQuery.andWhere('created_at', '<=', dateTime);
     }
     const transactions = await transactionsQuery;
@@ -182,19 +182,6 @@ function TransactionsController(database) {
       day: 32,
       hour: 0,
     }).add({ hours: timezoneInHour });
-
-    console.log(from, 'patolino1');
-    console.log(to, 'patolino2');
-
-    // const from = new Date(year, monthIndex, 1);
-    // const to = new Date(
-    //   year,
-    //   monthIndex + 1,
-    //   0,
-    //   23 + timezoneOffset / 60,
-    //   59,
-    //   59
-    // );
 
     const transactions = await database('transaction')
       .whereIn('wallet_id', walletsUsersIds)
