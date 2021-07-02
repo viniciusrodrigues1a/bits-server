@@ -1,4 +1,5 @@
 const yup = require('yup');
+const { Temporal } = require('proposal-temporal');
 const TransactionDestroy = require('../models/transactions/TransactionDestroy');
 const TransactionStore = require('../models/transactions/TransactionStore');
 const TransactionUpdate = require('../models/transactions/TransactionUpdate');
@@ -21,8 +22,13 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const { amount, incoming, categoryId, walletId, description } =
-      request.body;
+    const {
+      amount,
+      incoming,
+      categoryId,
+      walletId,
+      description,
+    } = request.body;
 
     try {
       const [transaction] = await transactionStore.execute({
@@ -100,27 +106,8 @@ function TransactionsController(database) {
   }
 
   async function index(request, response) {
-    function validateDate(date) {
-      var matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
-      if (!matches) {
-        return false;
-      }
-
-      const [year, month, day] = date.split('-');
-      month == '12' ? (month = '11') : null;
-      const dateObject = new Date(year, month, day);
-
-      if (
-        Number(year) != dateObject.getFullYear() ||
-        Number(month) != dateObject.getMonth() ||
-        Number(day) != dateObject.getDate()
-      ) {
-        return false;
-      }
-    }
-
     const querySchema = yup.object().shape({
-      date: yup.string().transform(validateDate),
+      date: yup.string().min(12).max(14),
       page: yup.number().positive(),
       timezoneOffset: yup.number().integer(),
     });
@@ -144,17 +131,11 @@ function TransactionsController(database) {
       .select('transaction.*', 'wallet.name as wallet_name');
 
     if (date) {
-      let [year, month, day] = date.split('-');
-      month == '12' ? (month = '11') : null;
-      const formattedDate = new Date(
-        year,
-        month,
-        day,
-        23 + timezoneOffset,
-        59,
-        59
-      );
-      transactionsQuery.andWhere('created_at', '<=', formattedDate);
+      const dateTime = Temporal.Instant.fromEpochMilliseconds(date).add({
+        minutes: timezoneOffset,
+      });
+
+      transactionsQuery.andWhere('created_at', '<=', dateTime);
     }
     const transactions = await transactionsQuery;
 
@@ -186,16 +167,21 @@ function TransactionsController(database) {
       .select('id')
       .then(data => data.map(a => a.id));
 
-    const monthIndex = month - 1;
-    const from = new Date(year, monthIndex, 1);
-    const to = new Date(
+    let timezoneInHour = timezoneOffset ? timezoneOffset / 60 : 0;
+
+    const from = Temporal.PlainDateTime.from({
       year,
-      monthIndex + 1,
-      0,
-      23 + timezoneOffset / 60,
-      59,
-      59
-    );
+      month,
+      day: 1,
+      hour: 0,
+    }).add({ hours: timezoneInHour });
+
+    const to = Temporal.PlainDateTime.from({
+      year,
+      month,
+      day: 32,
+      hour: 0,
+    }).add({ hours: timezoneInHour });
 
     const transactions = await database('transaction')
       .whereIn('wallet_id', walletsUsersIds)

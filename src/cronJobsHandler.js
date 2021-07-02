@@ -30,7 +30,6 @@ class CronJobsHandler {
   }
 
   createNewJob(transaction) {
-    console.log(`Registering job ${transaction.cron_expression}`);
     const cronJob = new CronJob({
       cronTime: transaction.cron_expression,
     });

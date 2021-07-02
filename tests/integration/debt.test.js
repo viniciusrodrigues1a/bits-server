@@ -113,7 +113,7 @@ describe('store transaction creation endpoint', () => {
         debtId,
         amount: 50,
       });
-    console.log(response.body);
+
     const { balance } = await databaseHelper
       .database('wallet')
       .where({ id: walletId })
