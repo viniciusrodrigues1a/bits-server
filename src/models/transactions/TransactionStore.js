@@ -1,6 +1,6 @@
+const Dinero = require('dinero.js');
 const verifyAmountForOperationInWallet = require('../wallet/methods/verifyAmountForOperationInWallet');
 const TransactionVerifyWalletExist = require('./methods/TransactionVerifyWalletExist');
-const Dinero = require('dinero.js');
 
 module.exports = class TransactionStore {
   constructor(database) {
@@ -12,15 +12,14 @@ module.exports = class TransactionStore {
 
     await TransactionVerifyWalletExist(this.database, wallet_id);
 
-    const { balance, currency } = await verifyAmountForOperationInWallet(
+    const wallet = await verifyAmountForOperationInWallet(
       this.database,
       amount,
       wallet_id
     );
 
-    if (!balance) {
-      throw new Error('wallet dont enought found');
-    }
+    const { balance: balanceWallet, currency } = wallet;
+
     let transaction;
     await this.database.transaction(async trx => {
       try {
@@ -34,7 +33,7 @@ module.exports = class TransactionStore {
           .returning('*');
 
         const newBalance = Dinero({
-          amount: balance,
+          amount: balanceWallet,
           currency,
         }).add(Dinero({ amount, currency }));
 
