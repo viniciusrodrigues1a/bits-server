@@ -1,5 +1,5 @@
 const App = require('./server');
-const connection = require('./database/connection');
+const connection = require('./infra/database/connection');
 const { CronJobsHandler } = require('./cronJobsHandler');
 
 const cronJobsHandler = new CronJobsHandler(connection);
