@@ -1,5 +1,4 @@
 const yup = require('yup');
-const { Temporal } = require('proposal-temporal');
 const TransactionDestroy = require('../models/transactions/TransactionDestroy');
 const TransactionStore = require('../models/transactions/TransactionStore');
 const TransactionUpdate = require('../models/transactions/TransactionUpdate');
@@ -167,7 +166,7 @@ function TransactionsController(database) {
       .select('id')
       .then(data => data.map(a => a.id));
 
-    let timezoneInHour = timezoneOffset ? timezoneOffset / 60 : 0;
+    const timezoneInHour = timezoneOffset ? timezoneOffset / 60 : 0;
 
     const from = Temporal.PlainDateTime.from({
       year,
