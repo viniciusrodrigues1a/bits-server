@@ -1,8 +1,9 @@
 const crypto = require('crypto');
-const database = require('../../src/database/connection');
+const Dinero = require('dinero.js');
+const database = require('../../src/infra/database/connection');
 const { generateString, generateInt } = require('./random');
 const hashAndSalt = require('../../src/utils/hashAndSalt');
-const Dinero = require('dinero.js');
+
 function databaseHelper() {
   return {
     database,
