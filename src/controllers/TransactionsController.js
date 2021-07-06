@@ -1,4 +1,10 @@
 const yup = require('yup');
+const {
+  CreateTransactionUseCase,
+} = require('../modules/transactions/domain/use-cases');
+const {
+  KnexCreateTransactionRepository,
+} = require('../modules/transactions/data/repositories');
 
 function TransactionsController(database) {
   async function store(request, response) {
@@ -14,36 +20,19 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const {
+    const { amount, categoryId, walletId, description } = request.body;
+
+    const useCase = new CreateTransactionUseCase(
+      new KnexCreateTransactionRepository(database),
+      { findOne: () => ({}) }
+    );
+
+    const transaction = await useCase.create({
       amount,
-      incoming,
       categoryId,
       walletId,
       description,
-    } = request.body;
-
-    const wallet = await database('wallet')
-      .where({
-        id: walletId,
-      })
-      .select('*')
-      .first();
-
-    if (!wallet) {
-      return response.status(404).json({
-        message: 'Wallet not found',
-      });
-    }
-
-    const [transaction] = await database('transaction')
-      .insert({
-        category_id: categoryId,
-        wallet_id: walletId,
-        amount,
-        incoming,
-        description,
-      })
-      .returning('*');
+    });
 
     return response.status(201).json({ ...transaction });
   }
