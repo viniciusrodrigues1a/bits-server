@@ -1,13 +1,6 @@
 const yup = require('yup');
-const TransactionDestroy = require('../models/transactions/TransactionDestroy');
-const TransactionStore = require('../models/transactions/TransactionStore');
-const TransactionUpdate = require('../models/transactions/TransactionUpdate');
 
 function TransactionsController(database) {
-  const transactionStore = new TransactionStore(database);
-  const transactionUpdate = new TransactionUpdate(database);
-  const transactionDestroy = new TransactionDestroy(database);
-
   async function store(request, response) {
     const bodySchema = yup.object().shape({
       walletId: yup.number().positive().required(),
@@ -21,70 +14,81 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const {
-      amount,
-      incoming,
-      categoryId,
-      walletId,
-      description,
-    } = request.body;
+    const { amount, incoming, categoryId, walletId, description } =
+      request.body;
 
-    try {
-      const [transaction] = await transactionStore.execute({
-        amount,
-        incoming,
-        category_id: categoryId,
-        wallet_id: walletId,
-        description,
-      });
+    const wallet = await database('wallet')
+      .where({
+        id: walletId,
+      })
+      .select('*')
+      .first();
 
-      return response.status(201).json({ ...transaction });
-    } catch (err) {
+    if (!wallet) {
       return response.status(404).json({
         message: 'Wallet not found',
       });
     }
+
+    const [transaction] = await database('transaction')
+      .insert({
+        category_id: categoryId,
+        wallet_id: walletId,
+        amount,
+        incoming,
+        description,
+      })
+      .returning('*');
+
+    return response.status(201).json({ ...transaction });
   }
 
   async function destroy(request, response) {
     const { id } = request.params;
 
-    try {
-      await transactionDestroy.execute(id);
+    const transaction = await database('transaction')
+      .where({ id })
+      .select('*')
+      .first();
 
-      return response.status(200).end();
-    } catch (err) {
-      if ((err.message = 'transaction not found')) {
-        return response.status(400).json({
-          message: 'Transaction not found',
-        });
-      }
-
-      return response.status(500).json({
-        message: 'internal server error',
+    if (!transaction) {
+      return response.status(400).json({
+        message: 'Transaction not found',
       });
     }
+
+    await database('transaction').where({ id }).del();
+
+    return response.status(200).end();
   }
 
   async function update(request, response) {
     const { amount, description } = request.body;
 
-    const { id: transaction_id } = request.params;
     if (!amount && !description) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    try {
-      const updatedTransaction = await transactionUpdate.execute({
-        newAmount: amount,
-        description,
-        transaction_id,
-      });
+    const { id } = request.params;
 
-      return response.status(200).json({ ...updatedTransaction });
-    } catch (err) {
+    const transaction = await database('transaction')
+      .where({ id })
+      .select('*')
+      .first();
+
+    if (!transaction) {
       return response.status(404).json({ message: 'Transaction not found' });
     }
+
+    const [updatedTransaction] = await database('transaction')
+      .where({ id })
+      .update({
+        amount,
+        description,
+      })
+      .returning('*');
+
+    return response.status(200).json({ ...updatedTransaction });
   }
 
   async function show(request, response) {
@@ -105,8 +109,27 @@ function TransactionsController(database) {
   }
 
   async function index(request, response) {
+    function validateDate(date) {
+      var matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
+      if (!matches) {
+        return false;
+      }
+
+      const [year, month, day] = date.split('-');
+      month == '12' ? (month = '11') : null;
+      const dateObject = new Date(year, month, day);
+
+      if (
+        Number(year) != dateObject.getFullYear() ||
+        Number(month) != dateObject.getMonth() ||
+        Number(day) != dateObject.getDate()
+      ) {
+        return false;
+      }
+    }
+
     const querySchema = yup.object().shape({
-      date: yup.string().min(12).max(14),
+      date: yup.string().transform(validateDate),
       page: yup.number().positive(),
       timezoneOffset: yup.number().integer(),
     });
@@ -130,11 +153,17 @@ function TransactionsController(database) {
       .select('transaction.*', 'wallet.name as wallet_name');
 
     if (date) {
-      const dateTime = Temporal.Instant.fromEpochMilliseconds(date).add({
-        minutes: timezoneOffset,
-      });
-
-      transactionsQuery.andWhere('created_at', '<=', dateTime);
+      let [year, month, day] = date.split('-');
+      month == '12' ? (month = '11') : null;
+      const formattedDate = new Date(
+        year,
+        month,
+        day,
+        23 + timezoneOffset,
+        59,
+        59
+      );
+      transactionsQuery.andWhere('created_at', '<=', formattedDate);
     }
     const transactions = await transactionsQuery;
 
@@ -166,21 +195,16 @@ function TransactionsController(database) {
       .select('id')
       .then(data => data.map(a => a.id));
 
-    const timezoneInHour = timezoneOffset ? timezoneOffset / 60 : 0;
-
-    const from = Temporal.PlainDateTime.from({
+    const monthIndex = month - 1;
+    const from = new Date(year, monthIndex, 1);
+    const to = new Date(
       year,
-      month,
-      day: 1,
-      hour: 0,
-    }).add({ hours: timezoneInHour });
-
-    const to = Temporal.PlainDateTime.from({
-      year,
-      month,
-      day: 32,
-      hour: 0,
-    }).add({ hours: timezoneInHour });
+      monthIndex + 1,
+      0,
+      23 + timezoneOffset / 60,
+      59,
+      59
+    );
 
     const transactions = await database('transaction')
       .whereIn('wallet_id', walletsUsersIds)

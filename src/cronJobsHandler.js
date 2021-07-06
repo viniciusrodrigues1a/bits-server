@@ -30,6 +30,7 @@ class CronJobsHandler {
   }
 
   createNewJob(transaction) {
+    console.log(`Registering job ${transaction.cron_expression}`);
     const cronJob = new CronJob({
       cronTime: transaction.cron_expression,
     });
@@ -73,8 +74,8 @@ class CronJobsHandler {
           .where({ id: transaction.wallet_id })
           .update({ balance: wallet.balance - transaction.amount });
       });
-    } catch (err) {
-      console.log(err);
+    } catch (e) {
+      console.log(e);
     }
   }
 }

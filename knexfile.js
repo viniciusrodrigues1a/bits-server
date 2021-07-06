@@ -1,7 +1,7 @@
 const path = require('path');
 require('dotenv').config();
 
-const databasePath = path.resolve(__dirname, 'src', 'infra', 'database');
+const databasePath = path.resolve(__dirname, 'src', 'database');
 
 module.exports = {
   development: {

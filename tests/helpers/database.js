@@ -1,6 +1,5 @@
 const crypto = require('crypto');
-const Dinero = require('dinero.js');
-const database = require('../../src/infra/database/connection');
+const database = require('../../src/database/connection');
 const { generateString, generateInt } = require('./random');
 const hashAndSalt = require('../../src/utils/hashAndSalt');
 
@@ -62,18 +61,8 @@ function databaseHelper() {
     async insertTransaction(data = {}) {
       const description = data.description || generateString();
       const amount = data.amount || generateInt();
-      const { walletId, categoryId, debt_or_credit_id } = data;
-
-      let newTransaction_belongs = null;
-      if (debt_or_credit_id) {
-        const [transaction] = await database(
-          'create_credit_or_debt_transaction'
-        )
-          .insert({ debt_or_credit_id })
-          .returning('id');
-
-        newTransaction_belongs = transaction;
-      }
+      const { walletId } = data;
+      const { categoryId } = data;
 
       const { id: newWalletId } = await this.insertWallet();
       const { id: newCategoryId } = await this.insertCategory();
@@ -84,24 +73,8 @@ function databaseHelper() {
           category_id: categoryId || newCategoryId,
           amount,
           description,
-          transaction_belongs: newTransaction_belongs,
         })
         .returning('*');
-
-      const { balance, currency } = await database('wallet')
-        .where({ id: walletId || newWalletId })
-        .select('*')
-        .first();
-
-      const newBalance = Dinero({
-        amount: balance,
-        currency,
-      }).add(Dinero({ amount, currency }));
-
-      await database('wallet')
-        .where({ id: walletId || newWalletId })
-        .update({ balance: newBalance.getAmount() });
-
       return transaction;
     },
 
@@ -121,44 +94,6 @@ function databaseHelper() {
         .returning('*');
 
       return budget;
-    },
-
-    async insertCredit(data = {}) {
-      const { walletId, amount } = data;
-
-      const { id: newWalletId } = await this.insertWallet();
-
-      const [credit] = await database('credit')
-        .insert({
-          dateNow: new Date(),
-          deadline: new Date(),
-          from: 'Julin',
-          description: 'my payment',
-          wallet_id: walletId || newWalletId,
-          amount_necessary: amount || generateInt(200, 400),
-        })
-        .returning('*');
-
-      return credit;
-    },
-
-    async insertDebt(data = {}) {
-      const { walletId, amount } = data;
-
-      const { id: newWalletId } = await this.insertWallet();
-
-      const [debt] = await database('debt')
-        .insert({
-          dateNow: new Date(),
-          deadline: new Date(),
-          from: 'Julin',
-          description: 'my payment',
-          wallet_id: walletId || newWalletId,
-          amount_necessary: amount || generateInt(200, 400),
-        })
-        .returning('*');
-
-      return debt;
     },
   };
 }
