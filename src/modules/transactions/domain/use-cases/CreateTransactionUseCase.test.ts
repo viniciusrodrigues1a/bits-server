@@ -31,4 +31,8 @@ describe('Use-case for Transaction creation', () => {
 
     expect(transaction.description).toEqual('My new phone');
   });
+
+  it("should throw WalletNotFoundError if wallet doesn't exist", async () => {
+    expect(true).toBe(false);
+  });
 });
