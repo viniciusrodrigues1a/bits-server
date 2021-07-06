@@ -22,7 +22,7 @@ describe('Use-case for Transaction creation', () => {
       data => new Promise((resolve, _) => resolve(data))
     );
 
-    const transaction = await sut.execute({
+    const transaction = await sut.create({
       amount: 1100,
       description: 'My new phone',
       walletId: 1,
