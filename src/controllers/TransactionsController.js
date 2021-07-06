@@ -14,8 +14,13 @@ function TransactionsController(database) {
       return response.status(400).json({ message: 'Validation failed!' });
     }
 
-    const { amount, incoming, categoryId, walletId, description } =
-      request.body;
+    const {
+      amount,
+      incoming,
+      categoryId,
+      walletId,
+      description,
+    } = request.body;
 
     const wallet = await database('wallet')
       .where({
@@ -110,7 +115,7 @@ function TransactionsController(database) {
 
   async function index(request, response) {
     function validateDate(date) {
-      var matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
+      const matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
       if (!matches) {
         return false;
       }
