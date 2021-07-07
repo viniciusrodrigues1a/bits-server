@@ -4,15 +4,26 @@ import {
   IFindOneWalletRepository,
 } from '../repositories';
 import { CreateTransactionUseCase } from './CreateTransactionUseCase';
+import { WalletNotFoundError } from './errors';
+
+function makeSut() {
+  const createTransactionRepositoryMock = mock<ICreateTransactionRepository>();
+  const findOneWalletRepositoryMock = mock<IFindOneWalletRepository>();
+  const sut = new CreateTransactionUseCase(
+    createTransactionRepositoryMock,
+    findOneWalletRepositoryMock
+  );
+
+  return { sut, createTransactionRepositoryMock, findOneWalletRepositoryMock };
+}
 
 describe('Use-case for Transaction creation', () => {
   it('should return a Transaction', async () => {
-    const createTransactionRepositoryMock = mock<ICreateTransactionRepository>();
-    const findOneWalletRepositoryMock = mock<IFindOneWalletRepository>();
-    const sut = new CreateTransactionUseCase(
+    const {
+      sut,
       createTransactionRepositoryMock,
-      findOneWalletRepositoryMock
-    );
+      findOneWalletRepositoryMock,
+    } = makeSut();
 
     findOneWalletRepositoryMock.findOne.mockReturnValueOnce(
       new Promise((resolve, _) => resolve({}))
@@ -33,6 +44,19 @@ describe('Use-case for Transaction creation', () => {
   });
 
   it("should throw WalletNotFoundError if wallet doesn't exist", async () => {
-    expect(true).toBe(false);
+    const { sut, findOneWalletRepositoryMock } = makeSut();
+
+    findOneWalletRepositoryMock.findOne.mockReturnValueOnce(
+      new Promise((resolve, _) => resolve(undefined))
+    );
+
+    await expect(
+      sut.create({
+        amount: 1100,
+        description: 'My new phone',
+        walletId: 1,
+        categoryId: 1,
+      })
+    ).rejects.toThrowError(new WalletNotFoundError());
   });
 });
