@@ -1,42 +1,6 @@
 const yup = require('yup');
-const {
-  CreateTransactionUseCase,
-} = require('../modules/transactions/domain/use-cases');
-const {
-  KnexCreateTransactionRepository,
-} = require('../modules/transactions/data/repositories');
 
 function TransactionsController(database) {
-  async function store(request, response) {
-    const bodySchema = yup.object().shape({
-      walletId: yup.number().positive().required(),
-      amount: yup.number().required(),
-      incoming: yup.boolean(),
-      categoryId: yup.number().positive(),
-      description: yup.string(),
-    });
-
-    if (!(await bodySchema.isValid(request.body))) {
-      return response.status(400).json({ message: 'Validation failed!' });
-    }
-
-    const { amount, categoryId, walletId, description } = request.body;
-
-    const useCase = new CreateTransactionUseCase(
-      new KnexCreateTransactionRepository(database),
-      { findOne: () => ({}) }
-    );
-
-    const transaction = await useCase.create({
-      amount,
-      categoryId,
-      walletId,
-      description,
-    });
-
-    return response.status(201).json({ ...transaction });
-  }
-
   async function destroy(request, response) {
     const { id } = request.params;
 
@@ -230,7 +194,6 @@ function TransactionsController(database) {
   }
 
   return {
-    store,
     destroy,
     update,
     show,

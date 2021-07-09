@@ -5,8 +5,9 @@ import {
   ICreateTransactionRepository,
   IFindOneWalletRepository,
 } from '../repositories';
+import { ICreateTransactionUseCase } from './ICreateTransactionUseCase';
 
-class CreateTransactionUseCase {
+class CreateTransactionUseCase implements ICreateTransactionUseCase {
   constructor(
     private createTransactionRepository: ICreateTransactionRepository,
     private findOneWalletRepository: IFindOneWalletRepository
