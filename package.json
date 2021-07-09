@@ -5,7 +5,7 @@
   "author": "viniciusrodrigues1a <viniciusrodrigues.aro@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node-dev src/index.js",
+    "start": "ts-node-dev src/main/index.ts",
     "database:migrate": "knex migrate:rollback --all && knex migrate:latest",
     "database:reset": "yarn database:migrate && yarn knex seed:run",
     "pretest": "cross-env NODE_ENV=test yarn database:migrate",
