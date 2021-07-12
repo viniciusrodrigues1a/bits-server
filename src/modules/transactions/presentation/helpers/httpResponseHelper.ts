@@ -7,3 +7,17 @@ export function okResponse(body: any): HttpResponse {
     body,
   };
 }
+
+export function notFoundResponse(message: string): HttpResponse {
+  return {
+    statusCode: statusCodes.notFound,
+    body: { error: true, message },
+  };
+}
+
+export function serverErrorResponse(): HttpResponse {
+  return {
+    statusCode: statusCodes.serverError,
+    body: { error: true, message: 'Internal server error' },
+  };
+}
