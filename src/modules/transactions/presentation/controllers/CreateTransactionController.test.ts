@@ -1,5 +1,8 @@
 import { mock } from 'jest-mock-extended';
-import { WalletNotFoundError } from '../../domain/use-cases/errors';
+import {
+  CategoryNotFoundError,
+  WalletNotFoundError,
+} from '../../domain/use-cases/errors';
 import { ICreateTransactionUseCase } from '../..//domain/use-cases/ICreateTransactionUseCase';
 import { statusCodes } from '../helpers';
 import { CreateTransactionController } from './CreateTransactionController';
@@ -25,6 +28,18 @@ describe('CreateTransactionController', () => {
 
     createTransactionUseCaseMock.create.mockImplementationOnce(() => {
       throw new WalletNotFoundError();
+    });
+
+    const response = await sut.handleRequest({ body: {} });
+
+    expect(response.statusCode).toBe(statusCodes.notFound);
+  });
+
+  it('should return notFound if use-case throws CategoryNotFoundError', async () => {
+    const { sut, createTransactionUseCaseMock } = makeSut();
+
+    createTransactionUseCaseMock.create.mockImplementationOnce(() => {
+      throw new CategoryNotFoundError();
     });
 
     const response = await sut.handleRequest({ body: {} });
