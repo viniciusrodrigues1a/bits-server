@@ -1,4 +1,7 @@
-import { WalletNotFoundError } from '../../domain/use-cases/errors';
+import {
+  CategoryNotFoundError,
+  WalletNotFoundError,
+} from '../../domain/use-cases/errors';
 import { ICreateTransactionUseCase } from '../../domain/use-cases/ICreateTransactionUseCase';
 import { okResponse, notFoundResponse, serverErrorResponse } from '../helpers';
 import { HttpRequest, HttpResponse } from '../protocols';
@@ -14,7 +17,10 @@ class CreateTransactionController {
 
       return okResponse(transaction);
     } catch (err) {
-      if (err.message === new WalletNotFoundError().message) {
+      if (
+        err.message === new WalletNotFoundError().message ||
+        err.message === new CategoryNotFoundError().message
+      ) {
         return notFoundResponse(err.message);
       }
     }
