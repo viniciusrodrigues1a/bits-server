@@ -59,4 +59,19 @@ describe('Use-case for Transaction creation', () => {
       })
     ).rejects.toThrowError(new WalletNotFoundError());
   });
+
+  it("should throw CategoryNotFoundError if category doesn't exist", async () => {
+    const { sut, findOneWalletRepositoryMock } = makeSut();
+
+    findOneWalletRepositoryMock.findOne.mockResolvedValue({});
+
+    await expect(
+      sut.create({
+        amount: 1100,
+        description: 'My new phone',
+        walletId: 1,
+        categoryId: 1,
+      })
+    ).rejects.toThrowError(new CategoryNotFoundError());
+  });
 });
