@@ -34,12 +34,8 @@ describe('Use-case for Transaction creation', () => {
       findOneCategoryRepositoryMock,
     } = makeSut();
 
-    findOneWalletRepositoryMock.findOne.mockReturnValueOnce(
-      new Promise((resolve, _) => resolve({}))
-    );
-
-    findOneCategoryRepositoryMock.findOne.mockResolvedValue({});
-
+    findOneWalletRepositoryMock.findOne.mockResolvedValueOnce({});
+    findOneCategoryRepositoryMock.findOne.mockResolvedValueOnce({});
     createTransactionRepositoryMock.create.mockImplementationOnce(
       data => new Promise((resolve, _) => resolve(data))
     );
@@ -61,11 +57,8 @@ describe('Use-case for Transaction creation', () => {
       findOneCategoryRepositoryMock,
     } = makeSut();
 
-    findOneWalletRepositoryMock.findOne.mockReturnValueOnce(
-      new Promise((resolve, _) => resolve(undefined))
-    );
-
-    findOneCategoryRepositoryMock.findOne.mockResolvedValue({});
+    findOneWalletRepositoryMock.findOne.mockResolvedValueOnce(undefined);
+    findOneCategoryRepositoryMock.findOne.mockResolvedValueOnce({});
 
     await expect(
       sut.create({
@@ -84,8 +77,8 @@ describe('Use-case for Transaction creation', () => {
       findOneCategoryRepositoryMock,
     } = makeSut();
 
-    findOneWalletRepositoryMock.findOne.mockResolvedValue({});
-    findOneCategoryRepositoryMock.findOne.mockResolvedValue(undefined);
+    findOneWalletRepositoryMock.findOne.mockResolvedValueOnce({});
+    findOneCategoryRepositoryMock.findOne.mockResolvedValueOnce(undefined);
 
     await expect(
       sut.create({
