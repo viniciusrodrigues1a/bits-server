@@ -1,20 +1,28 @@
 import { mock } from 'jest-mock-extended';
 import {
   ICreateTransactionRepository,
+  IFindOneCategoryRepository,
   IFindOneWalletRepository,
 } from '../repositories';
 import { CreateTransactionUseCase } from './CreateTransactionUseCase';
-import { WalletNotFoundError } from './errors';
+import { WalletNotFoundError, CategoryNotFoundError } from './errors';
 
 function makeSut() {
   const createTransactionRepositoryMock = mock<ICreateTransactionRepository>();
   const findOneWalletRepositoryMock = mock<IFindOneWalletRepository>();
+  const findOneCategoryRepositoryMock = mock<IFindOneCategoryRepository>();
   const sut = new CreateTransactionUseCase(
     createTransactionRepositoryMock,
-    findOneWalletRepositoryMock
+    findOneWalletRepositoryMock,
+    findOneCategoryRepositoryMock
   );
 
-  return { sut, createTransactionRepositoryMock, findOneWalletRepositoryMock };
+  return {
+    sut,
+    createTransactionRepositoryMock,
+    findOneWalletRepositoryMock,
+    findOneCategoryRepositoryMock,
+  };
 }
 
 describe('Use-case for Transaction creation', () => {
@@ -23,11 +31,14 @@ describe('Use-case for Transaction creation', () => {
       sut,
       createTransactionRepositoryMock,
       findOneWalletRepositoryMock,
+      findOneCategoryRepositoryMock,
     } = makeSut();
 
     findOneWalletRepositoryMock.findOne.mockReturnValueOnce(
       new Promise((resolve, _) => resolve({}))
     );
+
+    findOneCategoryRepositoryMock.findOne.mockResolvedValue({});
 
     createTransactionRepositoryMock.create.mockImplementationOnce(
       data => new Promise((resolve, _) => resolve(data))
@@ -44,11 +55,17 @@ describe('Use-case for Transaction creation', () => {
   });
 
   it("should throw WalletNotFoundError if wallet doesn't exist", async () => {
-    const { sut, findOneWalletRepositoryMock } = makeSut();
+    const {
+      sut,
+      findOneWalletRepositoryMock,
+      findOneCategoryRepositoryMock,
+    } = makeSut();
 
     findOneWalletRepositoryMock.findOne.mockReturnValueOnce(
       new Promise((resolve, _) => resolve(undefined))
     );
+
+    findOneCategoryRepositoryMock.findOne.mockResolvedValue({});
 
     await expect(
       sut.create({
@@ -61,9 +78,14 @@ describe('Use-case for Transaction creation', () => {
   });
 
   it("should throw CategoryNotFoundError if category doesn't exist", async () => {
-    const { sut, findOneWalletRepositoryMock } = makeSut();
+    const {
+      sut,
+      findOneWalletRepositoryMock,
+      findOneCategoryRepositoryMock,
+    } = makeSut();
 
     findOneWalletRepositoryMock.findOne.mockResolvedValue({});
+    findOneCategoryRepositoryMock.findOne.mockResolvedValue(undefined);
 
     await expect(
       sut.create({
