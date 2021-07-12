@@ -46,4 +46,16 @@ describe('CreateTransactionController', () => {
 
     expect(response.statusCode).toBe(statusCodes.notFound);
   });
+
+  it("should return serverError if use-case throws an error we're not handling", async () => {
+    const { sut, createTransactionUseCaseMock } = makeSut();
+
+    createTransactionUseCaseMock.create.mockImplementationOnce(() => {
+      throw new Error('Something went wrong on the server side');
+    });
+
+    const response = await sut.handleRequest({ body: {} });
+
+    expect(response.statusCode).toBe(statusCodes.serverError);
+  });
 });
