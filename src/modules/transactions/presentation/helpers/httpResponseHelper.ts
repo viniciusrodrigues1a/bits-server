@@ -8,6 +8,13 @@ export function okResponse(body: any): HttpResponse {
   };
 }
 
+export function noContentResponse(): HttpResponse {
+  return {
+    statusCode: statusCodes.noContent,
+    body: undefined,
+  };
+}
+
 export function notFoundResponse(message: string): HttpResponse {
   return {
     statusCode: statusCodes.notFound,
