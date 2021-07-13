@@ -15,7 +15,7 @@ describe('DeleteTransactionController', () => {
   it('should return status code noContent', async () => {
     const { sut } = makeSut();
 
-    const response = await sut.handleRequest({ body: { id: 1 } });
+    const response = await sut.handleRequest({ params: { id: 1 } });
 
     expect(response.statusCode).toBe(statusCodes.noContent);
   });
@@ -27,7 +27,7 @@ describe('DeleteTransactionController', () => {
       throw new TransactionNotFoundError();
     });
 
-    const response = await sut.handleRequest({ body: { id: 1 } });
+    const response = await sut.handleRequest({ params: { id: 1 } });
 
     expect(response.statusCode).toBe(statusCodes.notFound);
   });
@@ -39,7 +39,7 @@ describe('DeleteTransactionController', () => {
       throw new Error('Something went wrong on the server side');
     });
 
-    const response = await sut.handleRequest({ body: { id: 1 } });
+    const response = await sut.handleRequest({ params: { id: 1 } });
 
     expect(response.statusCode).toBe(statusCodes.serverError);
   });

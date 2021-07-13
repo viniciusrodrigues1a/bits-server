@@ -12,10 +12,12 @@ class DeleteTransactionController {
 
   async handleRequest(request: HttpRequest): Promise<HttpResponse> {
     try {
-      await this.deleteTransactionUseCase.delete(request.body.id);
+      await this.deleteTransactionUseCase.delete(request.params.id);
 
       return noContentResponse();
     } catch (err) {
+      console.log(err);
+
       if (err.message === new TransactionNotFoundError().message) {
         return notFoundResponse(err.message);
       }
