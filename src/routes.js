@@ -27,7 +27,7 @@ function Routes(database) {
 
   const transactionsController = TransactionsController(database);
   routes.put('/transactions/:id', auth, transactionsController.update);
-  routes.delete('/transactions/:id', auth, transactionsController.destroy);
+  //routes.delete('/transactions/:id', auth, transactionsController.destroy);
   routes.get('/transactions/:id', auth, transactionsController.show);
   routes.get('/transactions', auth, transactionsController.index);
   routes.get(
