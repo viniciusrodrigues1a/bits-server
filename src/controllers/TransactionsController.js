@@ -30,23 +30,6 @@ function TransactionsController(database) {
     return response.status(200).json({ ...updatedTransaction });
   }
 
-  async function show(request, response) {
-    const { id } = request.params;
-
-    const transaction = await database('transaction')
-      .where({ id })
-      .select('*')
-      .first();
-
-    if (!transaction) {
-      return response.status(404).json({
-        message: 'Transaction not found',
-      });
-    }
-
-    return response.status(200).json({ ...transaction });
-  }
-
   async function index(request, response) {
     function validateDate(date) {
       const matches = /(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/.exec(date);
@@ -176,7 +159,6 @@ function TransactionsController(database) {
 
   return {
     update,
-    show,
     index,
     getExpensesAndIncomes,
   };
