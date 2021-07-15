@@ -1,7 +1,7 @@
 type HttpRequest = {
   body?: any;
   params?: any;
-  headers: any;
+  headers?: any;
 };
 
 export { HttpRequest };
