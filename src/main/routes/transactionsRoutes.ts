@@ -3,6 +3,7 @@ import { adaptExpressMiddleware, adaptExpressRoute } from '../adapters';
 import {
   makeCreateTransactionController,
   makeDeleteTransactionController,
+  makeListTransactionController,
 } from '../factories/controllers';
 import { makeValidateAuthenticationMiddleware } from '../factories/middlewares';
 
@@ -18,6 +19,12 @@ transactionsRoutes.delete(
   '/:id',
   adaptExpressMiddleware(makeValidateAuthenticationMiddleware()),
   adaptExpressRoute(makeDeleteTransactionController())
+);
+
+transactionsRoutes.get(
+  '/:id',
+  adaptExpressMiddleware(makeValidateAuthenticationMiddleware()),
+  adaptExpressRoute(makeListTransactionController())
 );
 
 export { transactionsRoutes };
