@@ -1,7 +1,7 @@
 import { mock } from 'jest-mock-extended';
 import { TransactionNotFoundError } from '../../domain/use-cases/errors';
 import { IDeleteTransactionUseCase } from '../../domain/use-cases/IDeleteTransactionUseCase';
-import { statusCodes } from '../helpers';
+import { statusCodes } from '../../../shared/presentation/helpers';
 import { DeleteTransactionController } from './DeleteTransactionController';
 
 function makeSut() {

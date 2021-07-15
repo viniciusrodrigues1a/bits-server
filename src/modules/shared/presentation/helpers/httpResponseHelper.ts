@@ -1,5 +1,5 @@
-import { HttpResponse } from '../protocols';
-import { statusCodes } from '../helpers';
+import { HttpResponse } from '../../../transactions/presentation/protocols';
+import { statusCodes } from './';
 
 export function okResponse(body: any): HttpResponse {
   return {
@@ -12,6 +12,13 @@ export function noContentResponse(): HttpResponse {
   return {
     statusCode: statusCodes.noContent,
     body: undefined,
+  };
+}
+
+export function unauthorizedResponse(message: string): HttpResponse {
+  return {
+    statusCode: statusCodes.unauthorized,
+    body: { error: true, message },
   };
 }
 

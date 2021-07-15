@@ -3,7 +3,11 @@ import {
   WalletNotFoundError,
 } from '../../domain/use-cases/errors';
 import { ICreateTransactionUseCase } from '../../domain/use-cases/ICreateTransactionUseCase';
-import { okResponse, notFoundResponse, serverErrorResponse } from '../helpers';
+import {
+  okResponse,
+  notFoundResponse,
+  serverErrorResponse,
+} from '../../../shared/presentation/helpers';
 import { HttpRequest, HttpResponse } from '../protocols';
 
 class CreateTransactionController {

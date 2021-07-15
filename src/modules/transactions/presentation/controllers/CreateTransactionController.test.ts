@@ -4,7 +4,7 @@ import {
   WalletNotFoundError,
 } from '../../domain/use-cases/errors';
 import { ICreateTransactionUseCase } from '../..//domain/use-cases/ICreateTransactionUseCase';
-import { statusCodes } from '../helpers';
+import { statusCodes } from '../../../shared/presentation/helpers';
 import { CreateTransactionController } from './CreateTransactionController';
 
 function makeSut() {

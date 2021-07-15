@@ -1,19 +1,22 @@
 import { Router } from 'express';
-import { adaptExpressRoute } from '../adapters';
+import { adaptExpressMiddleware, adaptExpressRoute } from '../adapters';
 import {
   makeCreateTransactionController,
   makeDeleteTransactionController,
 } from '../factories/controllers';
+import { makeValidateAuthenticationMiddleware } from '../factories/middlewares';
 
 const transactionsRoutes = Router();
 
 transactionsRoutes.post(
   '/',
+  adaptExpressMiddleware(makeValidateAuthenticationMiddleware()),
   adaptExpressRoute(makeCreateTransactionController())
 );
 
 transactionsRoutes.delete(
   '/:id',
+  adaptExpressMiddleware(makeValidateAuthenticationMiddleware()),
   adaptExpressRoute(makeDeleteTransactionController())
 );
 

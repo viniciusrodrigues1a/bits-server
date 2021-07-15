@@ -3,3 +3,4 @@ export * from './FindOneWalletRepositoryFactory';
 export * from './FindOneCategoryRepositoryFactory';
 export * from './FindOneTransactionRepositoryFactory';
 export * from './DeleteTransactionRepositoryFactory';
+export * from './FindOneAccountRepositoryFactory';
