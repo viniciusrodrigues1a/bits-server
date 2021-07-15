@@ -175,7 +175,6 @@ function TransactionsController(database) {
   }
 
   return {
-    destroy,
     update,
     show,
     index,
