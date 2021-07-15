@@ -2,7 +2,7 @@ import { IValidateAuthenticationUseCase } from '../../domain/use-cases/IValidate
 import {
   HttpRequest,
   HttpResponse,
-} from 'modules/transactions/presentation/protocols';
+} from '../../../shared/presentation/protocols';
 import {
   notFoundResponse,
   okResponse,

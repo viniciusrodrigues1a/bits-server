@@ -1,4 +1,4 @@
-import { HttpResponse } from '../../../transactions/presentation/protocols';
+import { HttpResponse } from '../protocols';
 import { statusCodes } from './';
 
 export function okResponse(body: any): HttpResponse {

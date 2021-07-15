@@ -8,7 +8,10 @@ import {
   notFoundResponse,
   serverErrorResponse,
 } from '../../../shared/presentation/helpers';
-import { HttpRequest, HttpResponse } from '../protocols';
+import {
+  HttpRequest,
+  HttpResponse,
+} from '../../../shared/presentation/protocols';
 
 class CreateTransactionController {
   constructor(private createTransactionUseCase: ICreateTransactionUseCase) {}
