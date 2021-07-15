@@ -16,8 +16,6 @@ class DeleteTransactionController {
 
       return noContentResponse();
     } catch (err) {
-      console.log(err);
-
       if (err.message === new TransactionNotFoundError().message) {
         return notFoundResponse(err.message);
       }
