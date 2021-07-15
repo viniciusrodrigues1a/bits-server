@@ -1,25 +1,6 @@
 const yup = require('yup');
 
 function TransactionsController(database) {
-  async function destroy(request, response) {
-    const { id } = request.params;
-
-    const transaction = await database('transaction')
-      .where({ id })
-      .select('*')
-      .first();
-
-    if (!transaction) {
-      return response.status(400).json({
-        message: 'Transaction not found',
-      });
-    }
-
-    await database('transaction').where({ id }).del();
-
-    return response.status(200).end();
-  }
-
   async function update(request, response) {
     const { amount, description } = request.body;
 
