@@ -9,21 +9,25 @@ import { makeValidateAuthenticationMiddleware } from '../factories/middlewares';
 
 const transactionsRoutes = Router();
 
+const authMiddleware = adaptExpressMiddleware(
+  makeValidateAuthenticationMiddleware()
+);
+
 transactionsRoutes.post(
   '/',
-  adaptExpressMiddleware(makeValidateAuthenticationMiddleware()),
+  authMiddleware,
   adaptExpressRoute(makeCreateTransactionController())
 );
 
 transactionsRoutes.delete(
   '/:id',
-  adaptExpressMiddleware(makeValidateAuthenticationMiddleware()),
+  authMiddleware,
   adaptExpressRoute(makeDeleteTransactionController())
 );
 
 transactionsRoutes.get(
   '/:id',
-  adaptExpressMiddleware(makeValidateAuthenticationMiddleware()),
+  authMiddleware,
   adaptExpressRoute(makeListTransactionController())
 );
 
