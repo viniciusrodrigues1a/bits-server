@@ -8,7 +8,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "${PORT}:${PORT}"
+      - "${PORT}:${PORT}" 
     restart: "on-failure"
     volumes:
       - ./:/app
@@ -41,3 +41,10 @@ services:
       - POSTGRES_DB=${TEST_POSTGRES_DB}
     ports:
       - "${TEST_POSTGRES_PORT}:5432"
+  redis-test:
+    image: redis
+    container_name: redis-test
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - 6379:6379
